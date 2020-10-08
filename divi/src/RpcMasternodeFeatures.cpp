@@ -45,6 +45,7 @@ ActiveMasternodeStatus::ActiveMasternodeStatus(
     , outputIndex()
     , netAddress()
     , collateralAddress()
+    , rewardScript()
     , statusCode()
     , statusMessage()
 {}
@@ -54,6 +55,7 @@ MasternodeListEntry::MasternodeListEntry(
     , outputIndex()
     , status()
     , collateralAddress()
+    , rewardScript()
     , protocolVersion()
     , signatureTime()
     , lastSeenTime()
@@ -228,6 +230,7 @@ ActiveMasternodeStatus GetActiveMasternodeStatus()
         result.outputIndex = std::to_string(activeMasternode.vin.prevout.n);
         result.netAddress = activeMasternode.service.ToString();
         result.collateralAddress = CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString();
+        result.rewardScript = HexStr(mn.rewardScript);
         result.statusCode = std::to_string(activeMasternode.status);
         result.statusMessage = activeMasternode.GetStatus();
         result.activeMasternodeFound = true;
@@ -315,6 +318,7 @@ std::vector<MasternodeListEntry> GetMasternodeList(std::string strFilter, CBlock
         entry.outputIndex = oIdx;
         entry.status = strStatus;
         entry.collateralAddress = CBitcoinAddress(masternode.pubKeyCollateralAddress.GetID()).ToString();
+        entry.rewardScript = HexStr(masternode.rewardScript);
         entry.protocolVersion = masternode.protocolVersion;
         entry.lastSeenTime = (int64_t)masternode.lastPing.sigTime;
         entry.activeTime = (int64_t)(masternode.lastPing.sigTime - masternode.sigTime);

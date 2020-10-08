@@ -6,7 +6,6 @@
 #include "masternode.h"
 
 #include <sync.h>
-#include <Logging.h>
 #include <boost/lexical_cast.hpp>
 #include <timedata.h>
 #include <script/standard.h>
@@ -63,6 +62,7 @@ CMasternode::CMasternode(const CMasternode& other)
     vin = other.vin;
     addr = other.addr;
     pubKeyCollateralAddress = other.pubKeyCollateralAddress;
+    rewardScript = other.rewardScript;
     pubKeyMasternode = other.pubKeyMasternode;
     signature = other.signature;
     activeState = other.activeState;
@@ -83,6 +83,7 @@ CMasternode::CMasternode(const CMasternodeBroadcast& mnb)
     vin = mnb.vin;
     addr = mnb.addr;
     pubKeyCollateralAddress = mnb.pubKeyCollateralAddress;
+    rewardScript = mnb.rewardScript;
     pubKeyMasternode = mnb.pubKeyMasternode;
     signature = mnb.signature;
     activeState = MASTERNODE_ENABLED;
@@ -108,6 +109,7 @@ void CMasternode::swap(CMasternode& first, CMasternode& second) // nothrow
     swap(first.vin, second.vin);
     swap(first.addr, second.addr);
     swap(first.pubKeyCollateralAddress, second.pubKeyCollateralAddress);
+    swap(first.rewardScript, second.rewardScript);
     swap(first.pubKeyMasternode, second.pubKeyMasternode);
     swap(first.signature, second.signature);
     swap(first.activeState, second.activeState);
@@ -125,6 +127,11 @@ CMasternode& CMasternode::operator=(CMasternode from)
 {
     swap(*this, from);
     return *this;
+}
+
+CScript CMasternode::GetDefaultRewardScript() const
+{
+    return GetScriptForDestination(pubKeyCollateralAddress.GetID());
 }
 
 bool CMasternode::IsEnabled() const

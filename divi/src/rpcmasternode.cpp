@@ -396,12 +396,13 @@ Value listmasternodes(const Array& params, bool fHelp)
     for(auto& masternodeEntry : masternodeList)
     {
         Object obj;
-        obj.reserve(10);
+        obj.reserve(11);
         obj.emplace_back("network", masternodeEntry.network);
         obj.emplace_back("txhash", masternodeEntry.txHash);
         obj.emplace_back("outidx", masternodeEntry.outputIndex);
         obj.emplace_back("status", masternodeEntry.status);
         obj.emplace_back("addr", masternodeEntry.collateralAddress);
+        obj.emplace_back("rewardscript", masternodeEntry.rewardScript);
         obj.emplace_back("version", masternodeEntry.protocolVersion);
         obj.emplace_back("lastseen", masternodeEntry.lastSeenTime);
         obj.emplace_back("activetime", masternodeEntry.activeTime);
@@ -564,6 +565,7 @@ Value getmasternodestatus (const Array& params, bool fHelp)
     mnObj.push_back(Pair("outputidx", (uint64_t)std::stoi(activeMNStatus.outputIndex) ));
     mnObj.push_back(Pair("netaddr", activeMNStatus.netAddress));
     mnObj.push_back(Pair("addr", activeMNStatus.collateralAddress));
+    mnObj.push_back(Pair("rewardscript", activeMNStatus.rewardScript));
     mnObj.push_back(Pair("status", std::stoi(activeMNStatus.statusCode) ));
     mnObj.push_back(Pair("message", activeMNStatus.statusMessage));
     return mnObj;

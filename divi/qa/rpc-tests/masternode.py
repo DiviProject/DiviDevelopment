@@ -220,6 +220,7 @@ class MnTestFramework(BitcoinTestFramework):
           assert_equal (local_status["status"], 4)
           assert_equal(local_status["txhash"],listedMN["txhash"])
           assert_equal(local_status["outputidx"],listedMN["outidx"])
+          assert_equal(local_status["rewardscript"],listedMN["rewardscript"])
           node_found = True
       assert_equal(node_found,True)
     self.for_each_masternode(find_mn)

@@ -183,6 +183,7 @@ bool CMasternodeMan::UpdateWithNewBroadcast(const CMasternodeBroadcast &mnb, CMa
     if (mnb.sigTime > masternode.sigTime) {
         masternode.pubKeyMasternode = mnb.pubKeyMasternode;
         masternode.pubKeyCollateralAddress = mnb.pubKeyCollateralAddress;
+        masternode.rewardScript = mnb.rewardScript;
         masternode.sigTime = mnb.sigTime;
         masternode.signature = mnb.signature;
         masternode.protocolVersion = mnb.protocolVersion;
