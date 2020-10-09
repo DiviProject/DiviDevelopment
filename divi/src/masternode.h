@@ -159,12 +159,14 @@ public:
         READWRITE(vin);
         READWRITE(addr);
         READWRITE(pubKeyCollateralAddress);
-        /* The wire format (for which the serialisation here is relevant)
-           does not include the reward script yet.  */
-        if (ser_action.ForRead()) {
-            rewardScript = GetDefaultRewardScript();
-        } else if (rewardScript != GetDefaultRewardScript()) {
-            LogPrintf("WARNING: CMasternodeBroadcast - ignoring changed reward script for serialisation of %s\n", vin.prevout.ToString());
+        if (nVersion >= MN_REWARD_SCRIPT_VERSION) {
+            READWRITE(rewardScript);
+        } else {
+            if (ser_action.ForRead()) {
+                rewardScript = GetDefaultRewardScript();
+            } else if (rewardScript != GetDefaultRewardScript()) {
+                LogPrintf("WARNING: CMasternodeBroadcast - ignoring changed reward script for serialisation of %s\n", vin.prevout.ToString());
+            }
         }
         READWRITE(pubKeyMasternode);
         READWRITE(signature);
