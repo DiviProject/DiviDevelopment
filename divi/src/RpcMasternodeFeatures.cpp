@@ -247,7 +247,6 @@ ActiveMasternodeStatus GetActiveMasternodeStatus()
 unsigned FindLastPayeePaymentTime(CBlockIndex* chainTip, const MasternodePaymentData& paymentData, const CMasternode& masternode, const unsigned maxBlockDepth)
 {
     assert(chainTip);
-    CScript mnPayee = GetScriptForDestination(masternode.pubKeyCollateralAddress.GetID());
     unsigned n = 0;
     for (unsigned int i = 1; chainTip && chainTip->nHeight > 0; i++) {
         if (n >= maxBlockDepth) {
@@ -265,7 +264,7 @@ unsigned FindLastPayeePaymentTime(CBlockIndex* chainTip, const MasternodePayment
                 Search for this payee, with at least 2 votes. This will aid in consensus allowing the network
                 to converge on the same payees quickly, then keep the same schedule.
             */
-            if (masternodePayees->HasPayeeWithVotes(mnPayee, 2)) {
+            if (masternodePayees->HasPayeeWithVotes(masternode.GetPaymentScript(), 2)) {
                 return chainTip->nTime + masternode.DeterministicTimeOffset();
             }
         }
@@ -317,7 +316,7 @@ std::vector<MasternodeListEntry> GetMasternodeList(std::string strFilter, CBlock
         entry.txHash = strTxHash;
         entry.outputIndex = oIdx;
         entry.status = strStatus;
-        entry.collateralAddress = CBitcoinAddress(masternode.pubKeyCollateralAddress.GetID()).ToString();
+        entry.collateralAddress = collateralAddress;
         entry.rewardScript = HexStr(masternode.rewardScript);
         entry.protocolVersion = masternode.protocolVersion;
         entry.lastSeenTime = (int64_t)masternode.lastPing.sigTime;
