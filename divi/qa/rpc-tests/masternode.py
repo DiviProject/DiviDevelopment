@@ -45,7 +45,7 @@ class MnSetupData (object):
     if address is not None:
       self.address = address
 
-def setup_masternode(mempoolSync,controlNode, hostNode,alias,tier,hostIP, utxo = None):
+def setup_masternode(mempoolSync,controlNode, hostNode,alias,tier,hostIP, utxo = None, rewardAddr=""):
   """Calls fundmasternode with the given data and returns the
   MnConfigLine instance."""
   txdata = None
@@ -62,7 +62,7 @@ def setup_masternode(mempoolSync,controlNode, hostNode,alias,tier,hostIP, utxo =
   pubkey = controlNode.validateaddress(address)["pubkey"]
   if sync_required:
     mempoolSync()
-  data = hostNode.setupmasternode(alias,txdata["txhash"],str(txdata["vout"]), pubkey, hostIP)
+  data = hostNode.setupmasternode(alias,txdata["txhash"],str(txdata["vout"]), pubkey, hostIP, rewardAddr)
   return MnSetupData (data,address)
 
 class MnTestFramework(BitcoinTestFramework):
@@ -86,12 +86,12 @@ class MnTestFramework(BitcoinTestFramework):
 
     return result
 
-  def setup_masternode(self,controlNodeIndex, hostNodeIndex,alias,tier,utxo=None):
+  def setup_masternode(self,controlNodeIndex, hostNodeIndex,alias,tier,utxo=None, rewardAddr=""):
     def mempoolSync():
       sync_mempools (self.nodes)
     controlNode = self.nodes[controlNodeIndex]
     hostNode = self.nodes[hostNodeIndex]
-    self.setup[hostNodeIndex] = setup_masternode(mempoolSync,controlNode,hostNode,alias, tier,"localhost:%d" % p2p_port (hostNodeIndex),utxo=utxo)
+    self.setup[hostNodeIndex] = setup_masternode(mempoolSync,controlNode,hostNode,alias, tier,"localhost:%d" % p2p_port (hostNodeIndex),utxo=utxo, rewardAddr=rewardAddr)
     self.mn_control_node_indices[alias] = controlNodeIndex
     self.mn_host_node_indices[alias] = hostNodeIndex
 

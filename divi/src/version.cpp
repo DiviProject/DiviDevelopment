@@ -1,5 +1,6 @@
 #include <version.h>
 
+#include <chainparams.h>
 #include <Settings.h>
 
 extern Settings& settings;
@@ -12,6 +13,11 @@ int ActiveProtocol()
 {
     if (settings.ParameterIsSet("-activeversion"))
         return settings.GetArg("-activeversion", 0);
+
+    /* On regtest, we set the new protocol as active without any further
+       ado.  This allows proper testing of the changed logic.  */
+    if (Params().NetworkID() == CBaseChainParams::REGTEST)
+        return MN_REWARD_SCRIPT_VERSION;
 
     return MIN_PEER_PROTO_VERSION_AFTER_ENFORCEMENT;
 }

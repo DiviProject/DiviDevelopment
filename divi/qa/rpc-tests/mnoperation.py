@@ -57,6 +57,13 @@ class MnStatusTest (MnTestFramework):
     stop_node (self.nodes[n], n)
     self.nodes[n] = None
 
+  def start_node (self, n):
+    """Starts a node."""
+
+    self.nodes[n] = start_node (n, self.options.tmpdir, extra_args=self.base_args)
+    for i in [3, 4, 5, 6]:
+      connect_nodes(self.nodes[n], i)
+
   def advance_time (self, dt=1,delay=None):
     """Advances mocktime by the given number of seconds."""
 
@@ -83,8 +90,9 @@ class MnStatusTest (MnTestFramework):
     self.mine_blocks (25)
     assert_equal (self.nodes[0].getbalance (), 6250)
 
+    self.rewardAddr = self.nodes[0].getnewaddress ("reward2")
     self.setup_masternode(0,1,"mn1","copper")
-    self.setup_masternode(0,2,"mn2","silver")
+    self.setup_masternode(0,2,"mn2","silver",rewardAddr=self.rewardAddr)
     self.mine_blocks (15)
     set_node_times (self.nodes, self.time)
     self.mine_blocks (1)
@@ -175,7 +183,7 @@ class MnStatusTest (MnTestFramework):
     winners = self.verify_number_of_votes_exist_and_tally_winners(startHeight,endHeight, 2)
 
     addr1 = self.nodes[1].getmasternodestatus ()["addr"]
-    addr2 = self.nodes[2].getmasternodestatus ()["addr"]
+    addr2 = self.rewardAddr
     assert_equal (len (winners), 2)
     assert_greater_than (winners[addr1], 0)
     assert_greater_than (winners[addr2], 0)
@@ -215,11 +223,22 @@ class MnStatusTest (MnTestFramework):
     addr = self.nodes[1].getmasternodestatus ()["addr"]
     self.verify_number_of_votes_exist_and_tally_winners(startHeight,endHeight,1,addr)
 
+  def check_rewards (self):
+    print ("Checking rewards in wallet...")
+
+    self.start_node (0)
+    sync_blocks (self.nodes)
+
+    assert_greater_than (self.nodes[0].getbalance ("alloc->mn1"), 100)
+    assert_equal (self.nodes[0].getbalance ("alloc->mn2"), 300)
+    assert_greater_than (self.nodes[0].getbalance ("reward2"), 0)
+
   def run_test (self):
     self.fund_masternodes ()
     self.start_masternodes ()
     self.payments_both_active ()
     self.payments_one_active ()
+    self.check_rewards ()
 
 if __name__ == '__main__':
   MnStatusTest ().main ()
