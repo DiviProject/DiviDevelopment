@@ -11,7 +11,7 @@ from test_framework import BitcoinTestFramework
 from authproxy import JSONRPCException
 from util import *
 
-ACTIVATION_TIME = 2_100_000_000
+from segwit_light import ACTIVATION_TIME
 
 # Offset around the activation time where no restrictions are in place.
 NO_RESTRICTIONS = 24 * 3_600
