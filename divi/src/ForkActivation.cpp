@@ -6,7 +6,9 @@
 
 #include "chain.h"
 #include "primitives/block.h"
+#include "timedata.h"
 
+#include <cmath>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -58,4 +60,11 @@ bool ActivationState::IsActive(const Fork f) const
   const auto mit = ACTIVATION_TIMES.find(f);
   assert(mit != ACTIVATION_TIMES.end());
   return currentTime >= mit->second;
+}
+
+bool ActivationState::CloseToSegwitLight(const int maxSeconds)
+{
+  const int64_t now = GetAdjustedTime();
+  const int64_t activation = ACTIVATION_TIMES.at(Fork::SegwitLight);
+  return std::abs(now - activation) <= maxSeconds;
 }

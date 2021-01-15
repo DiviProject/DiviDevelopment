@@ -66,6 +66,7 @@
 #include <TransactionOpCounting.h>
 #include <OrphanTransactions.h>
 #include <MasternodeModule.h>
+#include <MemPoolEntry.h>
 #include <IndexDatabaseUpdates.h>
 #include <BlockTransactionChecker.h>
 #include <NodeState.h>
@@ -113,6 +114,13 @@ CBlockTreeDB* pblocktree = NULL;
 extern bool fAddressIndex;
 extern bool fSpentIndex;
 extern CTxMemPool mempool;
+
+/** Number of seconds around the "segwit light" fork for which we disallow
+ *  spending unconfirmed outputs (to avoid messing up with the change
+ *  itself).  This should be smaller than the matching constant for the
+ *  wallet (so the wallet does not construct things the mempool won't
+ *  accept in the end).  */
+constexpr int SEGWIT_LIGHT_FORBID_SPENDING_ZERO_CONF_SECONDS = 14400;
 
 bool IsFinalTx(const CTransaction& tx, const CChain& activeChain, int nBlockHeight = 0 , int64_t nBlockTime = 0);
 
@@ -620,7 +628,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             // do all inputs exist?
             // Note that this does not check for the presence of actual outputs (see the next check for that),
             // only helps filling in pfMissingInputs (to determine missing vs spent).
-            for (const CTxIn txin : tx.vin) {
+            for (const auto& txin : tx.vin) {
                 if (!view.HaveCoins(txin.prevout.hash)) {
                     if (pfMissingInputs)
                         *pfMissingInputs = true;
@@ -633,6 +641,21 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             if (!view.HaveInputs(tx))
                 return state.Invalid(error("%s : inputs already spent",__func__),
                                      REJECT_DUPLICATE, "bad-txns-inputs-spent");
+
+            // If we are close to the segwit-light activation (before or after),
+            // do not allow spending of zero-confirmation outputs.  This would
+            // mess up with the fork, as it is not clear whether the fork will be
+            // active or not when they get confirmed (and thus it is not possible
+            // to reliably construct a chain of transactions).
+            if (ActivationState::CloseToSegwitLight(SEGWIT_LIGHT_FORBID_SPENDING_ZERO_CONF_SECONDS)) {
+                for (const auto& txin : tx.vin) {
+                    const auto* coins = view.AccessCoins(txin.prevout.hash);
+                    assert(coins != nullptr && coins->IsAvailable(txin.prevout.n));
+                    if (coins->nHeight == CTxMemPoolEntry::MEMPOOL_HEIGHT)
+                        return state.DoS(0, error("%s : spending zero-confirmation output around segwit light", __func__),
+                                         REJECT_NONSTANDARD, "zero-conf-segwit-light");
+                }
+            }
 
             // Bring the best block into scope
             view.GetBestBlock();

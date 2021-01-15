@@ -200,6 +200,11 @@ private:
     isminetype IsMine(const CTxIn& txin) const;
     bool IsMine(const CTransaction& tx) const;
 
+    /** Returns true if the wallet should allow spending of unconfirmed change.
+     *  This is mostly determined by allowSpendingZeroConfirmationOutputs,
+     *  but is forced to off around the segwit-light fork.  */
+    bool AllowSpendingZeroConfirmationChange() const;
+
 protected:
     // CWalletDB: load from disk methods
     void LoadWalletTransaction(const CWalletTx& wtxIn) override;

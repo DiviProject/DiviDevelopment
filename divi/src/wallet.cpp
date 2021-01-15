@@ -45,6 +45,13 @@ extern Settings& settings;
 
 const FeeAndPriorityCalculator& priorityFeeCalculator = FeeAndPriorityCalculator::instance();
 
+/** Number of seconds around the "segwit light" fork for which we force
+ *  not spending unconfirmed change (to avoid messing up with the change
+ *  itself).  This should be larger than the matching constant for the
+ *  mempool (so the wallet does not construct things the mempool won't
+ *  accept in the end).  */
+constexpr int SEGWIT_LIGHT_DISABLE_SPENDING_ZERO_CONF_SECONDS = 43200;
+
 extern CCriticalSection cs_main;
 extern CTxMemPool mempool;
 
@@ -2045,6 +2052,12 @@ bool CWallet::SelectCoinsMinConf(
     return true;
 }
 
+bool CWallet::AllowSpendingZeroConfirmationChange() const
+{
+    return allowSpendingZeroConfirmationOutputs
+        && !ActivationState::CloseToSegwitLight(SEGWIT_LIGHT_DISABLE_SPENDING_ZERO_CONF_SECONDS);
+}
+
 void AppendOutputs(
     const std::vector<std::pair<CScript, CAmount> >& intendedDestinations,
     CMutableTransaction& txNew)
@@ -2813,7 +2826,7 @@ bool CWallet::IsTrusted(const CWalletTx& walletTransaction) const
         return true;
     if (nDepth < 0)
         return false;
-    if (!allowSpendingZeroConfirmationOutputs || !DebitsFunds(walletTransaction, isminetype::ISMINE_SPENDABLE)) // using wtx's cached debit
+    if (!AllowSpendingZeroConfirmationChange() || !DebitsFunds(walletTransaction, isminetype::ISMINE_SPENDABLE)) // using wtx's cached debit
         return false;
 
     // Trusted if all inputs are from us and are in the mempool:

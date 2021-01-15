@@ -62,6 +62,15 @@ public:
    */
   bool IsActive(Fork f) const;
 
+  /**
+   * Returns true if the current time is "close" to the activation of
+   * segwit-light (before or after), with close being within the given
+   * number of seconds.  This is used for a temporary measure to disallow
+   * (by mempool and wallet policy) spending of unconfirmed change
+   * around the fork.
+   */
+  static bool CloseToSegwitLight(int maxSeconds);
+
 };
 
 #endif // FORK_ACTIVATION_H
