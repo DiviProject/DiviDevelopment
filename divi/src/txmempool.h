@@ -8,6 +8,7 @@
 #define BITCOIN_TXMEMPOOL_H
 
 #include <list>
+#include <memory>
 
 #include "addressindex.h"
 #include "spentindex.h"
@@ -20,6 +21,7 @@
 
 class BlockMap;
 class CAutoFile;
+class TransactionUtxoHasher;
 
 /** Fake height value used in CCoins to signify they are only in the memory pool (since 0.8) */
 bool IsMemPoolHeight(unsigned coinHeight);
@@ -62,6 +64,7 @@ private:
     bool fSanityCheck; //! Normally false, true if -checkmempool or -regtest
     unsigned int nTransactionsUpdated;
     std::unique_ptr<FeePolicyEstimator> feePolicyEstimator;
+    std::unique_ptr<TransactionUtxoHasher> utxoHasher;
 
     const CFeeRate& minRelayFee; //! Passed to constructor to avoid dependency on main
     uint64_t totalTxSize; //! sum of all mempool tx' byte sizes
@@ -129,6 +132,9 @@ public:
                          std::vector<std::pair<CMempoolAddressDeltaKey, CMempoolAddressDelta> > &results);
 
     bool getSpentIndex(const CSpentIndexKey &key, CSpentIndexValue &value);
+
+    /** Returns the UTXO hasher instance used in the mempool.  */
+    const TransactionUtxoHasher& GetUtxoHasher() const;
 
     /** Affect CreateNewBlock prioritisation of transactions */
     bool IsPrioritizedTransaction(const uint256 hash);

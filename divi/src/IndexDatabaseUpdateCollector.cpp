@@ -88,7 +88,7 @@ void CollectUpdatesFromOutputs(
                     std::make_pair(CAddressIndexKey(addressType, uint160(hashBytes), txLocationRef.blockHeight, txLocationRef.transactionIndex, txLocationRef.hash, k, false), out.nValue));
                 // record unspent output
                 indexDatabaseUpdates.addressUnspentIndex.push_back(
-                    std::make_pair(CAddressUnspentKey(addressType, uint160(hashBytes), txLocationRef.hash, k), CAddressUnspentValue(out.nValue, out.scriptPubKey, txLocationRef.blockHeight)));
+                    std::make_pair(CAddressUnspentKey(addressType, uint160(hashBytes), txLocationRef.utxoHash, k), CAddressUnspentValue(out.nValue, out.scriptPubKey, txLocationRef.blockHeight)));
             } else {
                 continue;
             }
@@ -163,7 +163,7 @@ static void CollectUpdatesFromOutputs(
             // undo unspent index
             indexDBUpdates.addressUnspentIndex.push_back(
                 std::make_pair(
-                    CAddressUnspentKey(addressType, uint160(hashBytes), txLocationReference.hash, k),
+                    CAddressUnspentKey(addressType, uint160(hashBytes), txLocationReference.utxoHash, k),
                     CAddressUnspentValue()));
 
         }

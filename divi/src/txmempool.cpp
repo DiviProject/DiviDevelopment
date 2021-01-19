@@ -29,6 +29,24 @@ bool IsMemPoolHeight(unsigned coinHeight)
     return coinHeight == CTxMemPoolEntry::MEMPOOL_HEIGHT;
 }
 
+namespace
+{
+
+/** The UTXO hasher used in mempool logic.  */
+class MempoolUtxoHasher : public TransactionUtxoHasher
+{
+
+public:
+
+  uint256 GetUtxoHash(const CTransaction& tx) const override
+  {
+      return tx.GetHash();
+  }
+
+};
+
+} // anonymous namespace
+
 CTxMemPool::CTxMemPool(const CFeeRate& _minRelayFee,
                        const bool& addressIndex, const bool& spentIndex
     ): fSanityCheck(false)
@@ -49,6 +67,8 @@ CTxMemPool::CTxMemPool(const CFeeRate& _minRelayFee,
     // Confirmation times for very-low-fee transactions that take more
     // than an hour or three to confirm are highly variable.
     // feePolicyEstimator = new CfeePolicyEstimator(25);
+
+    utxoHasher.reset(new MempoolUtxoHasher());
 }
 
 CTxMemPool::~CTxMemPool()
@@ -110,6 +130,11 @@ bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry& entry,
     }
 
     return true;
+}
+
+const TransactionUtxoHasher& CTxMemPool::GetUtxoHasher() const
+{
+    return *utxoHasher;
 }
 
 void CTxMemPool::addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewCache &view)
@@ -264,7 +289,7 @@ void CTxMemPool::remove(const CTransaction& origTx, std::list<CTransaction>& rem
             // happen during chain re-orgs if origTx isn't re-accepted into
             // the mempool for any reason.
             for (unsigned int i = 0; i < origTx.vout.size(); i++) {
-                std::map<COutPoint, CInPoint>::iterator it = mapNextTx.find(COutPoint(origTx.GetHash(), i));
+                auto it = mapNextTx.find(COutPoint(utxoHasher->GetUtxoHash(origTx), i));
                 if (it == mapNextTx.end())
                     continue;
                 txToRemove.push_back(it->second.ptx->GetHash());
@@ -284,7 +309,7 @@ void CTxMemPool::remove(const CTransaction& origTx, std::list<CTransaction>& rem
                 const CTransaction& tx = mempoolTx.GetTx();
                 if (fRecursive) {
                     for (unsigned int i = 0; i < tx.vout.size(); i++) {
-                        std::map<COutPoint, CInPoint>::iterator it = mapNextTx.find(COutPoint(hash, i));
+                        std::map<COutPoint, CInPoint>::iterator it = mapNextTx.find(COutPoint(utxoHasher->GetUtxoHash(tx), i));
                         if (it == mapNextTx.end())
                             continue;
                         txToRemove.push_back(it->second.ptx->GetHash());
@@ -417,7 +442,7 @@ void CTxMemPool::check(const CCoinsViewCache* pcoins, const BlockMap& blockIndex
             CValidationState state;
             CTxUndo undo;
             assert(CheckInputs(tx, state, mempoolDuplicate, blockIndexMap, false, 0, false, NULL));
-            UpdateCoinsWithTransaction(tx, mempoolDuplicate, undo, 1000000);
+            UpdateCoinsWithTransaction(tx, mempoolDuplicate, undo, *utxoHasher, 1000000);
         }
     }
     unsigned int stepsSinceLastRemove = 0;
@@ -432,7 +457,7 @@ void CTxMemPool::check(const CCoinsViewCache* pcoins, const BlockMap& blockIndex
         } else {
             assert(CheckInputs(entry->GetTx(), state, mempoolDuplicate, blockIndexMap, false, 0, false, NULL));
             CTxUndo undo;
-            UpdateCoinsWithTransaction(entry->GetTx(), mempoolDuplicate, undo, 1000000);
+            UpdateCoinsWithTransaction(entry->GetTx(), mempoolDuplicate, undo, *utxoHasher, 1000000);
             stepsSinceLastRemove = 0;
         }
     }
@@ -479,9 +504,16 @@ bool CTxMemPool::lookupBareTxid(const uint256& btxid, CTransaction& result) cons
 
 bool CTxMemPool::lookupOutpoint(const uint256& hash, CTransaction& result) const
 {
-    /* For now (until we add the UTXO hasher and segwit light), the outpoint
-       is just the transaction ID.  */
-    return lookup(hash, result);
+    /* The TransactionUtxoHasher can only tell us the txid to use once we
+       know the transaction already.  Thus we check both txid and bare txid
+       in our index; if one of them matches, we then cross-check with the
+       then-known transaction that it actually should hash to that UTXO.  */
+    if (lookup(hash, result) && utxoHasher->GetUtxoHash(result) == hash)
+        return true;
+    if (lookupBareTxid(hash, result) && utxoHasher->GetUtxoHash(result) == hash)
+        return true;
+
+    return false;
 }
 
 CFeeRate CTxMemPool::estimateFee(int nBlocks) const

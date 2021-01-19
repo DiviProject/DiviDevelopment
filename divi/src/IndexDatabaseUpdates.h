@@ -7,6 +7,7 @@
 #include <uint256.h>
 
 class CTransaction;
+class TransactionUtxoHasher;
 
 /** One entry in the tx index, which locates transactions on disk by their txid
  *  or bare txid (both keys are possible).  */
@@ -34,10 +35,12 @@ struct IndexDatabaseUpdates
 struct TransactionLocationReference
 {
     uint256 hash;
+    uint256 utxoHash;
     unsigned blockHeight;
     int transactionIndex;
 
     TransactionLocationReference(
+        const TransactionUtxoHasher& utxoHasher,
         const CTransaction& tx,
         unsigned blockheightValue,
         int transactionIndexValue);
