@@ -139,6 +139,8 @@ public:
 
     CTransaction& operator=(const CTransaction& tx);
 
+    virtual ~CTransaction() = default;
+
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>

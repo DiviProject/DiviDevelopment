@@ -13,6 +13,7 @@
 #include "checkpoints.h"
 #include <chain.h>
 #include <chainparams.h>
+#include "ForkActivation.h"
 #include "net.h"
 #include "script/script.h"
 #include "script/sign.h"
@@ -176,17 +177,42 @@ std::set<CTxDestination> AddressBookManager::GetAccountAddresses(std::string str
 namespace
 {
 
-/** Dummy UTXO hasher for the wallet.  For now, this just always returns
- *  the normal txid, but we will later change it to return the proper hash
- *  for a WalletTx.  */
+/** UTXO hasher for wallet transactions.  It uses the transaction's known block
+ *  hash (from CMerkleTx) to determine the activation state of segwit light.  */
 class WalletUtxoHasher : public TransactionUtxoHasher
 {
 
+private:
+
+  const I_MerkleTxConfirmationNumberCalculator& confirmationNumberCalculator_;
+  const CChain& chainActive_;
+
 public:
+
+  WalletUtxoHasher(const I_MerkleTxConfirmationNumberCalculator& calc, const CChain& chain)
+    : confirmationNumberCalculator_(calc), chainActive_(chain)
+  {}
 
   OutputHash GetUtxoHash(const CTransaction& tx) const override
   {
-    return OutputHash(tx.GetHash());
+    const CMerkleTx* mtx = dynamic_cast<const CMerkleTx*>(&tx);
+    assert(mtx != nullptr);
+
+    const auto conf = confirmationNumberCalculator_.FindConfirmedBlockIndexAndDepth(*mtx);
+    const CBlockIndex* pindexBlock = conf.first;
+
+    /* If the transaction is not yet confirmed in a block, we use the current
+       tip to determine the segwit-light activation status.  This is not
+       perfect around the activation time, but there is nothing we can do
+       in that case anyway.  Mempool and wallet discourage spending unconfirmed
+       outputs around the segwit-light fork anyway.  */
+    if (conf.second <= 0)
+        pindexBlock = chainActive_.Tip();
+
+    assert(pindexBlock != nullptr);
+    const ActivationState as(pindexBlock);
+
+    return OutputHash(as.IsActive(Fork::SegwitLight) ? mtx->GetBareTxid() : mtx->GetHash());
   }
 
 };
@@ -211,7 +237,7 @@ CWallet::CWallet(const CChain& chain, const BlockMap& blockMap
     , transactionRecord_(new WalletTransactionRecord(cs_wallet,strWalletFile) )
     , outputTracker_( new SpentOutputTracker(*transactionRecord_,*confirmationNumberCalculator_) )
     , pwalletdbEncryption()
-    , utxoHasher(new WalletUtxoHasher() )
+    , utxoHasher(new WalletUtxoHasher(*confirmationNumberCalculator_, chain) )
     , nWalletVersion(FEATURE_BASE)
     , nWalletMaxVersion(FEATURE_BASE)
     , mapKeyMetadata()
