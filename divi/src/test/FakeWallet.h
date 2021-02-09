@@ -45,6 +45,9 @@ public:
    *  and number of confirmations.  */
   void AddConfirmations(unsigned numConf, int64_t minAge = 0);
 
+  /** Adds a given transaction to the wallet.  */
+  const CWalletTx& Add(const CTransaction& tx);
+
   /** Adds a new ordinary transaction to the wallet, paying a given amount
    *  to a given script.  The transaction is returned, and the output index
    *  with the output to the requested script is set.  */

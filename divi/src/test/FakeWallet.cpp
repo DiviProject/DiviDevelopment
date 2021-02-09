@@ -116,15 +116,19 @@ void FakeWallet::AddConfirmations(const unsigned numConf, const int64_t minAge)
   fakeChain.addBlocks(numConf, version, fakeChain.activeChain->Tip()->nTime + minAge);
 }
 
-const CWalletTx& FakeWallet::AddDefaultTx(const CScript& scriptToPayTo, unsigned& outputIndex,
-                                          const CAmount amount)
+const CWalletTx& FakeWallet::Add(const CTransaction& tx)
 {
-  const CTransaction tx = createDefaultTransaction(scriptToPayTo, outputIndex, amount);
   CWalletTx wtx(tx);
   AddToWallet(wtx);
   const CWalletTx* txPtr = GetWalletTx(wtx.GetHash());
   assert(txPtr);
   return *txPtr;
+}
+
+const CWalletTx& FakeWallet::AddDefaultTx(const CScript& scriptToPayTo, unsigned& outputIndex,
+                                          const CAmount amount)
+{
+  return Add(createDefaultTransaction(scriptToPayTo, outputIndex, amount));
 }
 
 void FakeWallet::FakeAddToChain(const CWalletTx& tx)

@@ -15,7 +15,9 @@
 #include <chain.h>
 #include <blockmap.h>
 #include <test/FakeWallet.h>
+#include <test/MockUtxoHasher.h>
 #include <StakableCoin.h>
+#include <I_CoinSelectionAlgorithm.h>
 #include <I_MerkleTxConfirmationNumberCalculator.h>
 
 class WalletCoinManagementTestFixture
@@ -23,11 +25,16 @@ class WalletCoinManagementTestFixture
 public:
     FakeBlockIndexWithHashes fakeChain;
     FakeWallet wallet;
+    MockUtxoHasher* utxoHasher;
 
     WalletCoinManagementTestFixture()
       : fakeChain(1, 1600000000, 1), wallet(fakeChain)
     {
         ENTER_CRITICAL_SECTION(wallet.cs_wallet);
+
+        std::unique_ptr<MockUtxoHasher> hasher(new MockUtxoHasher());
+        utxoHasher = hasher.get();
+        wallet.SetUtxoHasherForTesting(std::move(hasher));
     }
     ~WalletCoinManagementTestFixture()
     {
@@ -399,6 +406,81 @@ BOOST_AUTO_TEST_CASE(willEnsureStakingBalanceAndTotalBalanceAgreeEvenIfTxsBelong
     stakableCoins.insert(StakableCoin(firstNormalTx,COutPoint(firstNormalTx.GetHash(),firstTxOutputIndex),firstNormalTx.hashBlock));
     stakableCoins.insert(StakableCoin(secondNormalTx,COutPoint(secondNormalTx.GetHash(),secondTxOutputIndex),secondNormalTx.hashBlock));
     BOOST_CHECK_EQUAL_MESSAGE(stakableCoins.size(),2,"Missing coins in the stakable set");
+}
+
+BOOST_AUTO_TEST_CASE(willUseUtxoHasherForCoinLock)
+{
+    CScript defaultScript = GetScriptForDestination(wallet.getNewKey().GetID());
+    unsigned outputIndex=0;
+    const CWalletTx& wtx = wallet.AddDefaultTx(defaultScript,outputIndex, COIN);
+    const auto id = utxoHasher->Add(wtx);
+
+    wallet.LockCoin(COutPoint(id, outputIndex));
+
+    bool fIsSpendable;
+    BOOST_CHECK(!wallet.IsAvailableForSpending(&wtx,outputIndex,false,fIsSpendable,ALL_SPENDABLE_COINS));
+
+    BOOST_CHECK_EQUAL(wallet.ComputeCredit(wtx, isminetype::ISMINE_SPENDABLE, REQUIRE_UNLOCKED), 0);
+    BOOST_CHECK_EQUAL(wallet.ComputeCredit(wtx, isminetype::ISMINE_SPENDABLE, REQUIRE_LOCKED), COIN);
+}
+
+BOOST_AUTO_TEST_CASE(willMarkOutputsSpentBasedOnUtxoHasher)
+{
+    CScript defaultScript = GetScriptForDestination(wallet.getNewKey().GetID());
+    unsigned outputIndex=0;
+    const CWalletTx& wtx = wallet.AddDefaultTx(defaultScript,outputIndex, COIN);
+    const auto id = utxoHasher->Add(wtx);
+
+    CMutableTransaction mtx;
+    mtx.vin.emplace_back(id, outputIndex);
+    const auto& spendTx = wallet.Add(mtx);
+
+    /* The wallet's IsSpent check verifies also the spending tx' number
+       of confirmations, which requires it to be either in the chain or
+       in the mempool at least.  */
+    wallet.FakeAddToChain(wtx);
+    wallet.FakeAddToChain(spendTx);
+
+    BOOST_CHECK(wallet.IsSpent(wtx, outputIndex));
+    bool fIsSpendable;
+    BOOST_CHECK(!wallet.IsAvailableForSpending(&wtx,outputIndex,false,fIsSpendable,ALL_SPENDABLE_COINS));
+}
+
+/** Fake coin selector that just uses all available outputs.  */
+class AllCoinSelector : public I_CoinSelectionAlgorithm
+{
+public:
+
+  AllCoinSelector() = default;
+
+  std::set<COutput> SelectCoins(const CMutableTransaction& tx, const std::vector<COutput>& vCoins, CAmount& fees) const override
+  {
+    fees = COIN / 100;
+    return std::set<COutput>(vCoins.begin(), vCoins.end());
+  }
+
+};
+
+BOOST_AUTO_TEST_CASE(willUseUtxoHashForSpendingCoins)
+{
+    CScript defaultScript = GetScriptForDestination(wallet.getNewKey().GetID());
+    unsigned outputIndex=0;
+    const CWalletTx& wtx = wallet.AddDefaultTx(defaultScript,outputIndex, COIN);
+    const auto id = utxoHasher->Add(wtx);
+    wallet.FakeAddToChain(wtx);
+
+    const CScript sendTo = CScript() << OP_TRUE;
+    std::string strError;
+    CReserveKey reserveKey(wallet);
+    CAmount nFeeRequired;
+    CWalletTx wtxNew;
+    AllCoinSelector coinSelector;
+    BOOST_CHECK(wallet.CreateTransaction({{sendTo, COIN / 10}}, wtxNew, reserveKey, &coinSelector).second);
+
+    BOOST_CHECK_EQUAL(wtxNew.vin.size(), 1);
+    const auto& prevout = wtxNew.vin[0].prevout;
+    BOOST_CHECK(prevout.hash == id);
+    BOOST_CHECK_EQUAL(prevout.n, outputIndex);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
