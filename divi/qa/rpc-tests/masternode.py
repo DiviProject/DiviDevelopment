@@ -6,6 +6,7 @@
 
 from test_framework import BitcoinTestFramework
 from util import *
+import copy
 import time
 
 
@@ -171,6 +172,11 @@ class MnTestFramework(BitcoinTestFramework):
         else:
           break
 
+  def args_for(self, n):
+    """Returns the arguments to use for node n.  Defaults to the base args
+    but can be overridden as needed."""
+    return copy.deepcopy(self.base_args)
+
   def stop_masternode_daemons(self):
     def stop_masternode(nodeIndex):
       if self.nodes[nodeIndex] is not None:
@@ -185,7 +191,7 @@ class MnTestFramework(BitcoinTestFramework):
       if self.nodes[nodeIndex] is not None:
         assert_equal("WARNING -- overwriting connection","")
       else:
-        args = self.base_args[:]
+        args = self.args_for(nodeIndex)
         conf = self.setup[nodeIndex].cfg
         args.append ("-masternode=%s" % conf.alias)
         self.nodes[nodeIndex] = start_node (nodeIndex, self.options.tmpdir, extra_args=args, mn_config_lines=[conf.line])
