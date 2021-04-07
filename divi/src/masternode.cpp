@@ -133,6 +133,11 @@ CMasternode& CMasternode::operator=(CMasternode from)
 
 CScript CMasternode::GetDefaultRewardScript() const
 {
+    return GetDefaultRewardScript(pubKeyCollateralAddress);
+}
+
+CScript CMasternode::GetDefaultRewardScript(const CPubKey& pubKeyCollateralAddress)
+{
     return GetScriptForDestination(pubKeyCollateralAddress.GetID());
 }
 
