@@ -10,6 +10,7 @@
 #include <defaultValues.h>
 #include <Logging.h>
 #include <TransactionOpCounting.h>
+#include <OutputHash.h>
 #include <UtxoCheckingAndUpdating.h>
 
 #include <Settings.h>
@@ -52,7 +53,7 @@ class COrphan
 {
 public:
     const CTransaction* ptx;
-    std::set<uint256> setDependsOn;
+    std::set<OutputHash> setDependsOn;
     CFeeRate feeRate;
     double coinAgeOfInputsPerByte;
 
@@ -144,7 +145,7 @@ void BlockMemoryPoolTransactionCollector::ComputeTransactionPriority(
 
 void BlockMemoryPoolTransactionCollector::AddDependingTransactionsToPriorityQueue(
     DependingTransactionsMap& dependentTransactions,
-    const uint256& hash,
+    const OutputHash& hash,
     std::vector<TxPriority>& vecPriority,
     TxPriorityCompare& comparer) const
 {

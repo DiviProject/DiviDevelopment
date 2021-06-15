@@ -141,13 +141,13 @@ bool CBloomFilter::IsRelevantAndUpdate(const CTransaction& tx)
             if (data.size() != 0 && contains(data)) {
                 fFound = true;
                 if ((nFlags & BLOOM_UPDATE_MASK) == BLOOM_UPDATE_ALL)
-                    insert(COutPoint(hash, i));
+                    insert(COutPoint(OutputHash(hash), i));
                 else if ((nFlags & BLOOM_UPDATE_MASK) == BLOOM_UPDATE_P2PUBKEY_ONLY) {
                     txnouttype type;
                     std::vector<std::vector<unsigned char> > vSolutions;
                     if (ExtractScriptPubKeyFormat(txout.scriptPubKey, type, vSolutions) &&
                         (type == TX_PUBKEY || type == TX_MULTISIG))
-                        insert(COutPoint(hash, i));
+                        insert(COutPoint(OutputHash(hash), i));
                 }
                 break;
             }

@@ -176,7 +176,7 @@ class CCoinsViewErrorCatcher : public CCoinsViewBacked
 {
 public:
     CCoinsViewErrorCatcher(CCoinsView* view) : CCoinsViewBacked(view) {}
-    bool GetCoins(const uint256& txid, CCoins& coins) const override
+    bool GetCoins(const OutputHash& txid, CCoins& coins) const override
     {
         try {
             return CCoinsViewBacked::GetCoins(txid, coins);

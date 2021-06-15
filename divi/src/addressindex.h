@@ -15,10 +15,10 @@ struct CMempoolAddressDelta
 {
     int64_t time;
     CAmount amount;
-    uint256 prevhash;
+    OutputHash prevhash;
     unsigned int prevout;
 
-    CMempoolAddressDelta(int64_t t, CAmount a, const uint256& hash, unsigned int out) {
+    CMempoolAddressDelta(int64_t t, CAmount a, const OutputHash& hash, unsigned int out) {
         time = t;
         amount = a;
         prevhash = hash;
@@ -219,7 +219,7 @@ struct CAddressIndexIteratorHeightKey {
 struct CAddressUnspentKey {
     unsigned int type;
     uint160 hashBytes;
-    uint256 txhash;
+    OutputHash txhash;
     size_t index;
 
     size_t GetSerializeSize(int nType, int nVersion) const {
@@ -240,7 +240,7 @@ struct CAddressUnspentKey {
         index = ser_readdata32(s);
     }
 
-    CAddressUnspentKey(unsigned int addressType, uint160 addressHash, const uint256& txid, size_t indexValue) {
+    CAddressUnspentKey(unsigned int addressType, uint160 addressHash, const OutputHash& txid, size_t indexValue) {
         type = addressType;
         hashBytes = addressHash;
         txhash = txid;

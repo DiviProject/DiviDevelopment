@@ -38,9 +38,9 @@ class MempoolUtxoHasher : public TransactionUtxoHasher
 
 public:
 
-  uint256 GetUtxoHash(const CTransaction& tx) const override
+  OutputHash GetUtxoHash(const CTransaction& tx) const override
   {
-      return tx.GetHash();
+      return OutputHash(tx.GetHash());
   }
 
 };
@@ -76,7 +76,7 @@ CTxMemPool::~CTxMemPool()
     feePolicyEstimator.reset();
 }
 
-void CTxMemPool::pruneSpent(const uint256& hashTx, CCoins& coins)
+void CTxMemPool::pruneSpent(const OutputHash& hashTx, CCoins& coins)
 {
     LOCK(cs);
 
@@ -507,15 +507,15 @@ bool CTxMemPool::lookupBareTxid(const uint256& btxid, CTransaction& result) cons
     return true;
 }
 
-bool CTxMemPool::lookupOutpoint(const uint256& hash, CTransaction& result) const
+bool CTxMemPool::lookupOutpoint(const OutputHash& hash, CTransaction& result) const
 {
     /* The TransactionUtxoHasher can only tell us the txid to use once we
        know the transaction already.  Thus we check both txid and bare txid
        in our index; if one of them matches, we then cross-check with the
        then-known transaction that it actually should hash to that UTXO.  */
-    if (lookup(hash, result) && utxoHasher->GetUtxoHash(result) == hash)
+    if (lookup(hash.GetValue(), result) && utxoHasher->GetUtxoHash(result) == hash)
         return true;
-    if (lookupBareTxid(hash, result) && utxoHasher->GetUtxoHash(result) == hash)
+    if (lookupBareTxid(hash.GetValue(), result) && utxoHasher->GetUtxoHash(result) == hash)
         return true;
 
     return false;
@@ -607,7 +607,7 @@ void CTxMemPool::ClearPrioritisation(const uint256 hash)
 
 CCoinsViewMemPool::CCoinsViewMemPool(CCoinsView* baseIn, CTxMemPool& mempoolIn) : CCoinsViewBacked(baseIn), mempool(mempoolIn) {}
 
-bool CCoinsViewMemPool::GetCoins(const uint256& txid, CCoins& coins) const
+bool CCoinsViewMemPool::GetCoins(const OutputHash& txid, CCoins& coins) const
 {
     // If an entry in the mempool exists, always return that one, as it's guaranteed to never
     // conflict with the underlying cache, and it cannot have pruned entries (as it contains full)
@@ -620,7 +620,7 @@ bool CCoinsViewMemPool::GetCoins(const uint256& txid, CCoins& coins) const
     return (CCoinsViewBacked::GetCoins(txid, coins) && !coins.IsPruned());
 }
 
-bool CCoinsViewMemPool::HaveCoins(const uint256& txid) const
+bool CCoinsViewMemPool::HaveCoins(const OutputHash& txid) const
 {
     CTransaction dummy;
     if (mempool.lookupOutpoint(txid, dummy))
@@ -628,7 +628,7 @@ bool CCoinsViewMemPool::HaveCoins(const uint256& txid) const
 
     return CCoinsViewBacked::HaveCoins(txid);
 }
-bool CCoinsViewMemPool::GetCoinsAndPruneSpent(const uint256& txid,CCoins& coins) const
+bool CCoinsViewMemPool::GetCoinsAndPruneSpent(const OutputHash& txid,CCoins& coins) const
 {
     LOCK(mempool.cs);
     if (!GetCoins(txid, coins))

@@ -434,7 +434,7 @@ void LockUpMasternodeCollateral(const Settings& settings, std::function<void(con
         {
             LogPrintf("  %s %s\n", mne.getTxHash(), mne.getOutputIndex());
             mnTxHash.SetHex(mne.getTxHash());
-            COutPoint outpoint(mnTxHash, boost::lexical_cast<unsigned int>(mne.getOutputIndex()));
+            COutPoint outpoint(OutputHash(mnTxHash), boost::lexical_cast<unsigned int>(mne.getOutputIndex()));
             walletUtxoLockingFunction(outpoint);
         }
     }

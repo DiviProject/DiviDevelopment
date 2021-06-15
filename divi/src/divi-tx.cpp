@@ -191,7 +191,7 @@ static void MutateTxAddInput(CMutableTransaction& tx, const string& strInput)
     string strTxid = strInput.substr(0, pos);
     if ((strTxid.size() != 64) || !IsHex(strTxid))
         throw runtime_error("invalid TX input txid");
-    uint256 txid(strTxid);
+    const OutputHash txid(uint256S(strTxid));
 
     static const unsigned int minTxOutSz = 9;
     unsigned int nMaxSize = MAX_BLOCK_SIZE_LEGACY;
@@ -378,7 +378,7 @@ static void MutateTxSign(CMutableTransaction& tx, const string& flagStr)
             if (!prevOut.checkObject(types))
                 throw runtime_error("prevtxs internal object typecheck fail");
 
-            uint256 txid = ParseHashUV(prevOut["txid"], "txid");
+            const OutputHash txid(ParseHashUV(prevOut["txid"], "txid"));
 
             int nOut = atoi(prevOut["vout"].getValStr());
             if (nOut < 0)

@@ -40,8 +40,8 @@ protected:
 public:
     CCoinsViewDB(const BlockMap& blockIndicesByHash, size_t nCacheSize, bool fMemory = false, bool fWipe = false);
 
-    bool GetCoins(const uint256& txid, CCoins& coins) const override;
-    bool HaveCoins(const uint256& txid) const override;
+    bool GetCoins(const OutputHash& txid, CCoins& coins) const override;
+    bool HaveCoins(const OutputHash& txid) const override;
     uint256 GetBestBlock() const override;
     bool BatchWrite(CCoinsMap& mapCoins, const uint256& hashBlock) override;
     bool GetStats(CCoinsStats& stats) const override;

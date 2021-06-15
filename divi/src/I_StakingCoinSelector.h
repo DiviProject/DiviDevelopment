@@ -6,6 +6,7 @@
 #include <I_KeypoolReserver.h>
 
 class CMerkleTx;
+class OutputHash;
 
 class I_StakingCoinSelector
 {
@@ -22,6 +23,6 @@ public:
 
     /** Returns the UTXO hash that should be used for spending outputs
      *  from the given transaction (which should be part of the wallet).  */
-    virtual uint256 GetUtxoHash(const CMerkleTx& tx) const = 0;
+    virtual OutputHash GetUtxoHash(const CMerkleTx& tx) const = 0;
 };
 #endif// I_STAKING_COIN_SELECTOR_H

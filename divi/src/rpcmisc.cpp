@@ -997,8 +997,8 @@ Value getspentinfo(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid txid or index");
     }
 
-    uint256 txid = ParseHashV(txidValue, "txid");
-    int outputIndex = indexValue.get_int();
+    const OutputHash txid(ParseHashV(txidValue, "txid"));
+    const int outputIndex = indexValue.get_int();
 
     const CSpentIndexKey key(txid, outputIndex);
     CSpentIndexValue value;

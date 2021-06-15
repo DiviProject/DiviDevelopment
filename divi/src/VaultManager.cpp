@@ -235,7 +235,7 @@ UnspentOutputs VaultManager::getManagedUTXOs(VaultUTXOFilters filter) const
         if( (filter & VaultUTXOFilters::MATURED) > 0 && blocksTillMaturity > 0 ) continue;
         if( (filter & VaultUTXOFilters::INMATURE) > 0 && blocksTillMaturity < 1 ) continue;
 
-        const uint256 hash = utxoHasher_.GetUtxoHash(tx);
+        const OutputHash hash(utxoHasher_.GetUtxoHash(tx));
         for(unsigned outputIndex = 0; outputIndex < tx.vout.size(); ++outputIndex)
         {
             const CTxOut& output = tx.vout[outputIndex];

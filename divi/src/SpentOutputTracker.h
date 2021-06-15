@@ -7,7 +7,7 @@
 
 class WalletTransactionRecord;
 class COutPoint;
-class uint256;
+class OutputHash;
 class CWalletTx;
 class I_MerkleTxConfirmationNumberCalculator;
 
@@ -35,7 +35,7 @@ public:
     std::pair<CWalletTx*,bool> UpdateSpends(
         const CWalletTx& newlyAddedTransaction,
         bool loadedFromDisk=false);
-    bool IsSpent(const uint256& hash, unsigned int n) const;
+    bool IsSpent(const OutputHash& hash, unsigned int n) const;
     std::set<uint256> GetConflictingTxHashes(const CWalletTx& tx) const;
 };
 #endif// SPENT_OUTPUT_TRACKER_H

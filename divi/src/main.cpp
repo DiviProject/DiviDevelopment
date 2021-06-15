@@ -3195,7 +3195,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     }
     else if (strCommand == "tx" || strCommand == "dstx")
     {
-        std::vector<uint256> vWorkQueue;
+        std::vector<OutputHash> vWorkQueue;
         std::vector<uint256> vEraseQueue;
         CTransaction tx;
 

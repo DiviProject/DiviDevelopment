@@ -3,6 +3,7 @@
 #include <vector>
 #include <utility>
 #include <addressindex.h>
+#include <OutputHash.h>
 #include <spentindex.h>
 #include <uint256.h>
 
@@ -35,7 +36,7 @@ struct IndexDatabaseUpdates
 struct TransactionLocationReference
 {
     uint256 hash;
-    uint256 utxoHash;
+    OutputHash utxoHash;
     unsigned blockHeight;
     int transactionIndex;
 

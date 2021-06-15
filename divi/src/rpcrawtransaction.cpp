@@ -131,9 +131,9 @@ void TxToJSONExpanded(const CTransaction& tx, const uint256 hashBlock, Object& e
         // so we simply try looking up by both txid and bare txid as at
         // most one of them can match anyway.
         CSpentIndexValue spentInfo;
-        bool found = TransactionSearchIndexes::GetSpentIndex(fSpentIndex,pblocktree,mempool,CSpentIndexKey(txid, i), spentInfo);
+        bool found = TransactionSearchIndexes::GetSpentIndex(fSpentIndex, pblocktree, mempool, CSpentIndexKey(OutputHash(txid), i), spentInfo);
         if (!found)
-          found = TransactionSearchIndexes::GetSpentIndex(fSpentIndex,pblocktree,mempool,CSpentIndexKey(tx.GetBareTxid(), i), spentInfo);
+          found = TransactionSearchIndexes::GetSpentIndex(fSpentIndex, pblocktree, mempool, CSpentIndexKey(OutputHash(tx.GetBareTxid()), i), spentInfo);
         if (found) {
             out.push_back(Pair("spentTxId", spentInfo.txid.GetHex()));
             out.push_back(Pair("spentIndex", (int)spentInfo.inputIndex));
@@ -488,7 +488,7 @@ Value createrawtransaction(const Array& params, bool fHelp)
     for (const Value& input : inputs) {
         const Object& o = input.get_obj();
 
-        uint256 txid = ParseHashO(o, "txid");
+        const OutputHash txid(ParseHashO(o, "txid"));
 
         const Value& vout_v = find_value(o, "vout");
         if (vout_v.type() != int_type)
@@ -717,7 +717,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
         view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
 
         BOOST_FOREACH (const CTxIn& txin, mergedTx.vin) {
-            const uint256& prevHash = txin.prevout.hash;
+            const OutputHash& prevHash = txin.prevout.hash;
             CCoins coins;
             view.AccessCoins(prevHash); // this is certainly allowed to fail
         }
@@ -757,7 +757,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
 
             RPCTypeCheck(prevOut, map_list_of("txid", str_type)("vout", int_type)("scriptPubKey", str_type));
 
-            uint256 txid = ParseHashO(prevOut, "txid");
+            const OutputHash txid(ParseHashO(prevOut, "txid"));
 
             int nOut = find_value(prevOut, "vout").get_int();
             if (nOut < 0)
@@ -900,9 +900,9 @@ Value sendrawtransaction(const Array& params, bool fHelp)
        whether or not segwit light has been in effect for the transaction,
        we just try locating both txid and bare txid as at most one of them
        can match anyway.  */
-    const CCoins* existingCoins = view.AccessCoins(hashTx);
+    const CCoins* existingCoins = view.AccessCoins(OutputHash(hashTx));
     if (existingCoins == nullptr)
-        existingCoins = view.AccessCoins(tx.GetBareTxid());
+        existingCoins = view.AccessCoins(OutputHash(tx.GetBareTxid()));
     const bool fHaveChain = existingCoins && existingCoins->nHeight < 1000000000;
     static const CFeeRate& feeRate = FeeAndPriorityCalculator::instance().getMinimumRelayFeeRate();
     if (!fHaveMempool && !fHaveChain) {

@@ -1,5 +1,7 @@
 #ifndef UTXO_CHECKING_AND_UPDATING_H
 #define UTXO_CHECKING_AND_UPDATING_H
+
+#include <OutputHash.h>
 #include <vector>
 #include <scriptCheck.h>
 #include <amount.h>
@@ -38,7 +40,7 @@ public:
   TransactionUtxoHasher(const TransactionUtxoHasher&) = delete;
   void operator=(const TransactionUtxoHasher&) = delete;
 
-  virtual uint256 GetUtxoHash(const CTransaction& tx) const = 0;
+  virtual OutputHash GetUtxoHash(const CTransaction& tx) const = 0;
 
 };
 
@@ -56,7 +58,7 @@ class BlockUtxoHasher : public TransactionUtxoHasher
 
 public:
 
-  uint256 GetUtxoHash(const CTransaction& tx) const override;
+  OutputHash GetUtxoHash(const CTransaction& tx) const override;
 
 };
 

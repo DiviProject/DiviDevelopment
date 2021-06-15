@@ -12,9 +12,9 @@
 #include <chainparams.h>
 #include <defaultValues.h>
 
-uint256 BlockUtxoHasher::GetUtxoHash(const CTransaction& tx) const
+OutputHash BlockUtxoHasher::GetUtxoHash(const CTransaction& tx) const
 {
-    return tx.GetHash();
+    return OutputHash(tx.GetHash());
 }
 
 void UpdateCoinsWithTransaction(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txundo,
