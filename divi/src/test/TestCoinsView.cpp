@@ -9,12 +9,12 @@ class EmptyCoinsView : public CCoinsView
 
 public:
 
-  bool GetCoins(const uint256& txid, CCoins& coins) const override
+  bool GetCoins(const OutputHash& txid, CCoins& coins) const override
   {
     return false;
   }
 
-  bool HaveCoins(const uint256& txid) const override
+  bool HaveCoins(const OutputHash& txid) const override
   {
     return false;
   }

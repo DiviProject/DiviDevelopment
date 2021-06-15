@@ -78,7 +78,7 @@ public:
         CScript outputScript = (isP2SH)? ConvertToP2SH(redeemScript):redeemScript;
         vaultKeyStore.AddCScript(redeemScript);
 
-        coinstake.vin.emplace_back(uint256S("0x25"), 0, createDummyVaultScriptSig(redeemScript));
+        coinstake.vin.emplace_back(OutputHash(uint256S("0x25")), 0, createDummyVaultScriptSig(redeemScript));
         coinstake.vout.emplace_back(0, outputScript);
 
         block.vtx.emplace_back();

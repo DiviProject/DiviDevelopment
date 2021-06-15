@@ -52,16 +52,16 @@ public:
     CMutableTransaction mtx;
     mtx.vout.emplace_back(2 * COIN, CScript () << OP_TRUE);
     mtx.vout.emplace_back(COIN, CScript () << OP_TRUE);
-    coins.ModifyCoins(mtx.GetHash())->FromTx(mtx, 0);
+    coins.ModifyCoins(OutputHash(mtx.GetHash()))->FromTx(mtx, 0);
 
     coins.SetBestBlock(fakeChain.activeChain->Tip()->GetBlockHash());
 
     txParent.vin.resize(2);
-    txParent.vin[0].prevout = COutPoint(mtx.GetHash(), 0);
+    txParent.vin[0].prevout = COutPoint(OutputHash(mtx.GetHash()), 0);
     txParent.vin[0].scriptSig = CScript() << OP_11;
     /* Add a second input to make sure the transaction does not qualify as
        coinbase and thus has a bare txid unequal to its normal hash.  */
-    txParent.vin[1].prevout = COutPoint(mtx.GetHash(), 1);
+    txParent.vin[1].prevout = COutPoint(OutputHash(mtx.GetHash()), 1);
     txParent.vin[1].scriptSig = CScript() << OP_12;
     txParent.vout.resize(3);
     for (int i = 0; i < 3; i++)
@@ -75,7 +75,7 @@ public:
     {
         txChild[i].vin.resize(1);
         txChild[i].vin[0].scriptSig = CScript() << OP_11;
-        txChild[i].vin[0].prevout.hash = txParent.GetHash();
+        txChild[i].vin[0].prevout.hash = OutputHash(txParent.GetHash());
         txChild[i].vin[0].prevout.n = i;
         txChild[i].vout.resize(1);
         txChild[i].vout[0].scriptPubKey = CScript() << OP_11 << OP_EQUAL;
@@ -87,7 +87,7 @@ public:
     {
         txGrandChild[i].vin.resize(1);
         txGrandChild[i].vin[0].scriptSig = CScript() << OP_11;
-        txGrandChild[i].vin[0].prevout.hash = txChild[i].GetBareTxid();
+        txGrandChild[i].vin[0].prevout.hash = OutputHash(txChild[i].GetBareTxid());
         txGrandChild[i].vin[0].prevout.n = 0;
         txGrandChild[i].vout.resize(1);
         txGrandChild[i].vout[0].scriptPubKey = CScript() << OP_11 << OP_EQUAL;
@@ -196,20 +196,20 @@ BOOST_AUTO_TEST_CASE(MempoolOutpointLookup)
     AddAll();
     CCoinsViewMemPool viewPool(&coins, testPool);
 
-    BOOST_CHECK(testPool.lookupOutpoint(txParent.GetHash(), tx));
-    BOOST_CHECK(!testPool.lookupOutpoint(txParent.GetBareTxid(), tx));
-    BOOST_CHECK(!testPool.lookupOutpoint(txChild[0].GetHash(), tx));
-    BOOST_CHECK(testPool.lookupOutpoint(txChild[0].GetBareTxid(), tx));
+    BOOST_CHECK(testPool.lookupOutpoint(OutputHash(txParent.GetHash()), tx));
+    BOOST_CHECK(!testPool.lookupOutpoint(OutputHash(txParent.GetBareTxid()), tx));
+    BOOST_CHECK(!testPool.lookupOutpoint(OutputHash(txChild[0].GetHash()), tx));
+    BOOST_CHECK(testPool.lookupOutpoint(OutputHash(txChild[0].GetBareTxid()), tx));
 
-    BOOST_CHECK(viewPool.HaveCoins(txParent.GetHash()));
-    BOOST_CHECK(viewPool.GetCoins(txParent.GetHash(), c));
-    BOOST_CHECK(!viewPool.HaveCoins(txParent.GetBareTxid()));
-    BOOST_CHECK(!viewPool.GetCoins(txParent.GetBareTxid(), c));
+    BOOST_CHECK(viewPool.HaveCoins(OutputHash(txParent.GetHash())));
+    BOOST_CHECK(viewPool.GetCoins(OutputHash(txParent.GetHash()), c));
+    BOOST_CHECK(!viewPool.HaveCoins(OutputHash(txParent.GetBareTxid())));
+    BOOST_CHECK(!viewPool.GetCoins(OutputHash(txParent.GetBareTxid()), c));
 
-    BOOST_CHECK(!viewPool.HaveCoins(txChild[0].GetHash()));
-    BOOST_CHECK(!viewPool.GetCoins(txChild[0].GetHash(), c));
-    BOOST_CHECK(viewPool.HaveCoins(txChild[0].GetBareTxid()));
-    BOOST_CHECK(viewPool.GetCoins(txChild[0].GetBareTxid(), c));
+    BOOST_CHECK(!viewPool.HaveCoins(OutputHash(txChild[0].GetHash())));
+    BOOST_CHECK(!viewPool.GetCoins(OutputHash(txChild[0].GetHash()), c));
+    BOOST_CHECK(viewPool.HaveCoins(OutputHash(txChild[0].GetBareTxid())));
+    BOOST_CHECK(viewPool.GetCoins(OutputHash(txChild[0].GetBareTxid()), c));
 }
 
 BOOST_AUTO_TEST_CASE(MempoolExists)
@@ -236,8 +236,8 @@ BOOST_AUTO_TEST_CASE(MempoolSpentIndex)
     testPool.addUnchecked(txParent.GetHash(), CTxMemPoolEntry(txParent, 0, 0, 0.0, 1), coins);
     testPool.addUnchecked(txChild[0].GetHash(), CTxMemPoolEntry(txChild[0], 0, 0, 0.0, 1), coins);
 
-    const CSpentIndexKey keyParent(txParent.GetHash(), 0);
-    const CSpentIndexKey keyChild(txChild[0].GetHash(), 0);
+    const CSpentIndexKey keyParent(OutputHash(txParent.GetHash()), 0);
+    const CSpentIndexKey keyChild(OutputHash(txChild[0].GetHash()), 0);
 
     CSpentIndexValue value;
     BOOST_CHECK(testPool.getSpentIndex(keyParent, value));

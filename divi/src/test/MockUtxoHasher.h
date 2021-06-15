@@ -18,7 +18,7 @@ class MockUtxoHasher : public TransactionUtxoHasher
 private:
 
   /** Custom hashes to return for given txid's.  */
-  std::map<uint256, uint256> customHashes;
+  std::map<uint256, OutputHash> customHashes;
 
   /** Internal counter to produce unique fake hashes.  */
   unsigned cnt = 0;
@@ -30,13 +30,13 @@ public:
 
   /** Marks the given transaction for returning a custom hash.  The hash
    *  is generated uniquely and returned from the function.  */
-  uint256 Add(const CTransaction& tx);
+  OutputHash Add(const CTransaction& tx);
 
   /** Marks the given transaction for using the bare txid rather than
    *  the normal txid.  */
   void UseBareTxid(const CTransaction& tx);
 
-  uint256 GetUtxoHash(const CTransaction& tx) const override;
+  OutputHash GetUtxoHash(const CTransaction& tx) const override;
 
 };
 

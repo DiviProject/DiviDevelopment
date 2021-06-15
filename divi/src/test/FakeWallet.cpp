@@ -71,7 +71,7 @@ CMutableTransaction createDefaultTransaction(const CScript& defaultScript, unsig
   tx.vout[index].scriptPubKey = defaultScript;
   tx.vin.resize(1);
   // Avoid flagging as a coinbase tx
-  tx.vin[0].prevout = COutPoint(GetRandHash(),static_cast<uint32_t>(GetRand(100)) );
+  tx.vin[0].prevout = COutPoint(OutputHash(GetRandHash()), static_cast<uint32_t>(GetRand(100)) );
 
   return tx;
 }

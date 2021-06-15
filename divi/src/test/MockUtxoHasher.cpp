@@ -3,24 +3,24 @@
 #include "hash.h"
 #include "primitives/transaction.h"
 
-uint256 MockUtxoHasher::Add(const CTransaction& tx)
+OutputHash MockUtxoHasher::Add(const CTransaction& tx)
 {
   ++cnt;
-  const uint256 value = Hash(&cnt, (&cnt) + 1);
+  const OutputHash value(Hash(&cnt, (&cnt) + 1));
   customHashes.emplace(tx.GetHash(), value);
   return value;
 }
 
 void MockUtxoHasher::UseBareTxid(const CTransaction& tx)
 {
-  customHashes.emplace(tx.GetHash(), tx.GetBareTxid());
+  customHashes.emplace(tx.GetHash(), OutputHash(tx.GetBareTxid()));
 }
 
-uint256 MockUtxoHasher::GetUtxoHash(const CTransaction& tx) const
+OutputHash MockUtxoHasher::GetUtxoHash(const CTransaction& tx) const
 {
   const uint256 txid = tx.GetHash();
   const auto mit = customHashes.find(txid);
   if (mit != customHashes.end())
     return mit->second;
-  return txid;
+  return OutputHash(txid);
 }
