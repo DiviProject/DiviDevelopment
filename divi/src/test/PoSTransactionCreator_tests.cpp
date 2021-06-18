@@ -15,6 +15,7 @@
 #include "test/FakeWallet.h"
 #include "test/MockBlockIncentivesPopulator.h"
 #include "test/MockBlockSubsidyProvider.h"
+#include "test/MockUtxoHasher.h"
 
 #include <boost/test/unit_test.hpp>
 #include "test/test_only.h"
@@ -57,6 +58,10 @@ protected:
   /** A script from the wallet for convenience.  */
   const CScript walletScript;
 
+  /** UTXO hasher used in the wallet.  The instance is owned by the wallet,
+   *  and a reference is kept here.  */
+  MockUtxoHasher* utxoHasher;
+
   /* Convenience variables for tests to use in calls to CreatePoS.  */
   CMutableTransaction mtx;
   unsigned txTime;
@@ -74,6 +79,10 @@ protected:
                 posModule.proofOfStakeGenerator(), wallet, hashedBlockTimestamps),
       walletScript(GetScriptForDestination(wallet.getNewKey().GetID()))
   {
+    std::unique_ptr<MockUtxoHasher> hasher(new MockUtxoHasher());
+    utxoHasher = hasher.get();
+    wallet.SetUtxoHasherForTesting(std::move (hasher));
+
     /* Set up a default block reward if we don't need anything else.  */
     EXPECT_CALL(blockSubsidyProvider, GetFullBlockValue(_))
         .WillRepeatedly(Return(11 * COIN));
@@ -118,6 +127,20 @@ BOOST_AUTO_TEST_CASE(checksForConfirmationsAndAge)
 
   wallet.AddConfirmations(20, 1000);
   BOOST_CHECK(CreatePoS());
+}
+
+BOOST_AUTO_TEST_CASE(usesUtxoHashForInputs)
+{
+  const auto& tx = wallet.AddDefaultTx(walletScript, outputIndex, 1000 * COIN);
+  wallet.FakeAddToChain(tx);
+  wallet.AddConfirmations(20, 1000);
+
+  const auto hash = utxoHasher->Add(tx);
+  BOOST_CHECK(CreatePoS());
+
+  BOOST_CHECK_EQUAL(mtx.vin.size(), 1);
+  BOOST_CHECK_EQUAL(mtx.vin[0].prevout.n, outputIndex);
+  BOOST_CHECK(mtx.vin[0].prevout.hash == hash);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

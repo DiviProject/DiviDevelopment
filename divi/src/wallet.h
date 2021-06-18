@@ -293,6 +293,9 @@ public:
 
     uint256 GetUtxoHash(const CMerkleTx& tx) const override;
 
+    /** Replaces the UTXO hasher used in the wallet, for testing purposes.  */
+    void SetUtxoHasherForTesting(std::unique_ptr<TransactionUtxoHasher> hasher);
+
     //  keystore implementation
     // Generate a new key
     CPubKey GenerateNewKey(uint32_t nAccountIndex, bool fInternal);

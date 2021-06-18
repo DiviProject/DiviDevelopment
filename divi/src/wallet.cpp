@@ -2347,6 +2347,11 @@ uint256 CWallet::GetUtxoHash(const CMerkleTx& tx) const
     return utxoHasher->GetUtxoHash(tx);
 }
 
+void CWallet::SetUtxoHasherForTesting(std::unique_ptr<TransactionUtxoHasher> hasher)
+{
+    utxoHasher = std::move(hasher);
+}
+
 DBErrors CWallet::LoadWallet()
 {
     if (!fFileBacked)
