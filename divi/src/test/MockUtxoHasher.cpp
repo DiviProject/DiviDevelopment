@@ -11,6 +11,11 @@ uint256 MockUtxoHasher::Add(const CTransaction& tx)
   return value;
 }
 
+void MockUtxoHasher::UseBareTxid(const CTransaction& tx)
+{
+  customHashes.emplace(tx.GetHash(), tx.GetBareTxid());
+}
+
 uint256 MockUtxoHasher::GetUtxoHash(const CTransaction& tx) const
 {
   const uint256 txid = tx.GetHash();

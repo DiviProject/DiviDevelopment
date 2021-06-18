@@ -32,8 +32,8 @@ BOOST_AUTO_TEST_CASE(addsCorrectOutputs)
   const auto id2 = utxoHasher.Add(tx2);
 
   CTxUndo txundo;
-  UpdateCoins(tx1, coins, txundo, utxoHasher, 101);
-  UpdateCoins(tx2, coins, txundo, utxoHasher, 102);
+  UpdateCoinsWithTransaction(tx1, coins, txundo, utxoHasher, 101);
+  UpdateCoinsWithTransaction(tx2, coins, txundo, utxoHasher, 102);
 
   BOOST_CHECK(coins.HaveCoins(tx1.GetHash()));
   BOOST_CHECK(!coins.HaveCoins(tx2.GetHash()));

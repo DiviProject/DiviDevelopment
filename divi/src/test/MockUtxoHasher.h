@@ -32,6 +32,10 @@ public:
    *  is generated uniquely and returned from the function.  */
   uint256 Add(const CTransaction& tx);
 
+  /** Marks the given transaction for using the bare txid rather than
+   *  the normal txid.  */
+  void UseBareTxid(const CTransaction& tx);
+
   uint256 GetUtxoHash(const CTransaction& tx) const override;
 
 };

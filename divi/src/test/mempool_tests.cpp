@@ -5,6 +5,7 @@
 #include "txmempool.h"
 
 #include "FakeBlockIndexChain.h"
+#include "MockUtxoHasher.h"
 
 #include <boost/test/unit_test.hpp>
 #include <list>
@@ -20,7 +21,8 @@ protected:
   /** A parent transaction.  */
   CMutableTransaction txParent;
 
-  /** Three children of the parent.  */
+  /** Three children of the parent.  They use the bare txid for their UTXOs
+   *  in our UTXO hasher.  */
   CMutableTransaction txChild[3];
 
   /** Three grand children.  */
@@ -45,6 +47,8 @@ public:
       testPool(CFeeRate(0), addressIndex, spentIndex),
       coinsMemPool(nullptr, testPool), coins(&coinsMemPool)
   {
+    std::unique_ptr<MockUtxoHasher> utxoHasher(new MockUtxoHasher());
+
     CMutableTransaction mtx;
     mtx.vout.emplace_back(2 * COIN, CScript () << OP_TRUE);
     mtx.vout.emplace_back(COIN, CScript () << OP_TRUE);
@@ -76,13 +80,14 @@ public:
         txChild[i].vout.resize(1);
         txChild[i].vout[0].scriptPubKey = CScript() << OP_11 << OP_EQUAL;
         txChild[i].vout[0].nValue = COIN;
+        utxoHasher->UseBareTxid(txChild[i]);
     }
 
     for (int i = 0; i < 3; i++)
     {
         txGrandChild[i].vin.resize(1);
         txGrandChild[i].vin[0].scriptSig = CScript() << OP_11;
-        txGrandChild[i].vin[0].prevout.hash = txChild[i].GetHash();
+        txGrandChild[i].vin[0].prevout.hash = txChild[i].GetBareTxid();
         txGrandChild[i].vin[0].prevout.n = 0;
         txGrandChild[i].vout.resize(1);
         txGrandChild[i].vout[0].scriptPubKey = CScript() << OP_11 << OP_EQUAL;
@@ -90,6 +95,7 @@ public:
     }
 
     testPool.setSanityCheck(true);
+    testPool.SetUtxoHasherForTesting(std::move(utxoHasher));
     testPool.clear();
   }
 
@@ -192,18 +198,18 @@ BOOST_AUTO_TEST_CASE(MempoolOutpointLookup)
 
     BOOST_CHECK(testPool.lookupOutpoint(txParent.GetHash(), tx));
     BOOST_CHECK(!testPool.lookupOutpoint(txParent.GetBareTxid(), tx));
-    BOOST_CHECK(testPool.lookupOutpoint(txChild[0].GetHash(), tx));
-    BOOST_CHECK(!testPool.lookupOutpoint(txChild[0].GetBareTxid(), tx));
+    BOOST_CHECK(!testPool.lookupOutpoint(txChild[0].GetHash(), tx));
+    BOOST_CHECK(testPool.lookupOutpoint(txChild[0].GetBareTxid(), tx));
 
     BOOST_CHECK(viewPool.HaveCoins(txParent.GetHash()));
     BOOST_CHECK(viewPool.GetCoins(txParent.GetHash(), c));
     BOOST_CHECK(!viewPool.HaveCoins(txParent.GetBareTxid()));
     BOOST_CHECK(!viewPool.GetCoins(txParent.GetBareTxid(), c));
 
-    BOOST_CHECK(viewPool.HaveCoins(txChild[0].GetHash()));
-    BOOST_CHECK(viewPool.GetCoins(txChild[0].GetHash(), c));
-    BOOST_CHECK(!viewPool.HaveCoins(txChild[0].GetBareTxid()));
-    BOOST_CHECK(!viewPool.GetCoins(txChild[0].GetBareTxid(), c));
+    BOOST_CHECK(!viewPool.HaveCoins(txChild[0].GetHash()));
+    BOOST_CHECK(!viewPool.GetCoins(txChild[0].GetHash(), c));
+    BOOST_CHECK(viewPool.HaveCoins(txChild[0].GetBareTxid()));
+    BOOST_CHECK(viewPool.GetCoins(txChild[0].GetBareTxid(), c));
 }
 
 BOOST_AUTO_TEST_CASE(MempoolExists)

@@ -137,6 +137,11 @@ const TransactionUtxoHasher& CTxMemPool::GetUtxoHasher() const
     return *utxoHasher;
 }
 
+void CTxMemPool::SetUtxoHasherForTesting(std::unique_ptr<TransactionUtxoHasher> hasher)
+{
+    utxoHasher = std::move(hasher);
+}
+
 void CTxMemPool::addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewCache &view)
 {
     LOCK(cs);
