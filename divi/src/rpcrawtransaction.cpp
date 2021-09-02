@@ -343,6 +343,8 @@ Value listunspent(const Array& params, bool fHelp)
             "[                   (array of json object)\n"
             "  {\n"
             "    \"txid\" : \"txid\",        (string) the transaction id \n"
+            "    \"baretxid\" : \"baretxid\", (string) The bare txid (without signatures)\n"
+            "    \"outputhash\" :  \"outputhash\", (string) The hash (txid or bare txid) that should be used for spending\n"
             "    \"vout\" : n,               (numeric) the vout value\n"
             "    \"address\" : \"address\",  (string) the divi address\n"
             "    \"account\" : \"account\",  (string) The associated account, or \"\" for the default account\n"
@@ -401,6 +403,8 @@ Value listunspent(const Array& params, bool fHelp)
         const CScript& pk = out.tx->vout[out.i].scriptPubKey;
         Object entry;
         entry.push_back(Pair("txid", out.tx->GetHash().GetHex()));
+        entry.push_back(Pair("baretxid", out.tx->GetBareTxid().GetHex()));
+        entry.push_back(Pair("outputhash", pwalletMain->GetUtxoHash(*out.tx).GetHex()));
         entry.push_back(Pair("vout", out.i));
         CTxDestination address;
         if (ExtractDestination(out.tx->vout[out.i].scriptPubKey, address)) {

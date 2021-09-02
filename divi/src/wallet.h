@@ -29,6 +29,8 @@
 #include <I_StakingCoinSelector.h>
 #include <I_WalletLoader.h>
 
+#include <memory>
+
 class I_CoinSelectionAlgorithm;
 class CKeyMetadata;
 class CKey;
@@ -39,6 +41,7 @@ class CBlockIndex;
 struct StakableCoin;
 class WalletTransactionRecord;
 class SpentOutputTracker;
+class TransactionUtxoHasher;
 class BlockMap;
 class CChain;
 class CCoinControl;
@@ -159,6 +162,7 @@ private:
     std::unique_ptr<WalletTransactionRecord> transactionRecord_;
     std::unique_ptr<SpentOutputTracker> outputTracker_;
     std::unique_ptr<CWalletDB> pwalletdbEncryption;
+    std::unique_ptr<TransactionUtxoHasher> utxoHasher;
 
     int nWalletVersion;   //! the current wallet version: clients below this version are not able to load the wallet
     int nWalletMaxVersion;//! the maximum wallet format version: memory-only variable that specifies to what version this wallet may be upgraded
@@ -286,6 +290,8 @@ public:
     void UnlockCoin(const COutPoint& output);
     void UnlockAllCoins();
     void ListLockedCoins(CoinVector& vOutpts);
+
+    uint256 GetUtxoHash(const CMerkleTx& tx) const override;
 
     //  keystore implementation
     // Generate a new key

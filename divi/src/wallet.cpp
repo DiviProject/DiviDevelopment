@@ -30,6 +30,7 @@
 #include <Logging.h>
 #include <StakableCoin.h>
 #include <SpentOutputTracker.h>
+#include <UtxoCheckingAndUpdating.h>
 #include <WalletTx.h>
 #include <WalletTransactionRecord.h>
 #include <I_CoinSelectionAlgorithm.h>
@@ -172,6 +173,25 @@ std::set<CTxDestination> AddressBookManager::GetAccountAddresses(std::string str
     return result;
 }
 
+namespace
+{
+
+/** Dummy UTXO hasher for the wallet.  For now, this just always returns
+ *  the normal txid, but we will later change it to return the proper hash
+ *  for a WalletTx.  */
+class WalletUtxoHasher : public TransactionUtxoHasher
+{
+
+public:
+
+  uint256 GetUtxoHash(const CTransaction& tx) const override
+  {
+    return tx.GetHash();
+  }
+
+};
+
+} // anonymous namespace
 
 CWallet::CWallet(const CChain& chain, const BlockMap& blockMap
     ): cs_wallet()
@@ -191,6 +211,7 @@ CWallet::CWallet(const CChain& chain, const BlockMap& blockMap
     , transactionRecord_(new WalletTransactionRecord(cs_wallet,strWalletFile) )
     , outputTracker_( new SpentOutputTracker(*transactionRecord_,*confirmationNumberCalculator_) )
     , pwalletdbEncryption()
+    , utxoHasher(new WalletUtxoHasher() )
     , nWalletVersion(FEATURE_BASE)
     , nWalletMaxVersion(FEATURE_BASE)
     , mapKeyMetadata()
@@ -483,7 +504,7 @@ CAmount CWallet::ComputeCredit(const CWalletTx& tx, const UtxoOwnershipFilter& f
 {
     const CAmount maxMoneyAllowedInOutput = Params().MaxMoneyOut();
     CAmount nCredit = 0;
-    uint256 hash = tx.GetHash();
+    const uint256 hash = GetUtxoHash(tx);
     for (unsigned int i = 0; i < tx.vout.size(); i++) {
         if( (creditFilterFlags & REQUIRE_UNSPENT) && IsSpent(tx,i)) continue;
         if( (creditFilterFlags & REQUIRE_UNLOCKED) && IsLockedCoin(hash,i)) continue;
@@ -1100,7 +1121,7 @@ std::set<uint256> CWallet::GetConflicts(const uint256& txid) const
  */
 bool CWallet::IsSpent(const CWalletTx& wtx, unsigned int n) const
 {
-    return outputTracker_->IsSpent(wtx.GetHash(), n);
+    return outputTracker_->IsSpent(GetUtxoHash(wtx), n);
 }
 
 bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
@@ -1694,7 +1715,7 @@ bool CWallet::IsAvailableForSpending(
         return false;
     }
 
-    const uint256 hash = pcoin->GetHash();
+    const uint256 hash = GetUtxoHash(*pcoin);
 
     if (IsSpent(*pcoin, i))
         return false;
@@ -1865,7 +1886,7 @@ bool CWallet::SelectStakeCoins(std::set<StakableCoin>& setCoins) const
             continue;
 
         //add to our stake set
-        setCoins.emplace(*out.tx, COutPoint(out.tx->GetHash(), out.i), out.tx->hashBlock);
+        setCoins.emplace(*out.tx, COutPoint(GetUtxoHash(*out.tx), out.i), out.tx->hashBlock);
         nAmountSelected += out.tx->vout[out.i].nValue;
     }
     return true;
@@ -2150,6 +2171,7 @@ static bool SetChangeOutput(
 }
 
 static CAmount AttachInputs(
+    const TransactionUtxoHasher& utxoHasher,
     const std::set<COutput>& setCoins,
     CMutableTransaction& txWithoutChange)
 {
@@ -2157,7 +2179,7 @@ static CAmount AttachInputs(
     CAmount nValueIn = 0;
     for(const COutput& coin: setCoins)
     {
-        txWithoutChange.vin.emplace_back(coin.tx->GetHash(), coin.i);
+        txWithoutChange.vin.emplace_back(utxoHasher.GetUtxoHash(*coin.tx), coin.i);
         nValueIn += coin.Value();
     }
     return nValueIn;
@@ -2166,6 +2188,7 @@ static CAmount AttachInputs(
 static std::pair<std::string,bool> SelectInputsProvideSignaturesAndFees(
     const CKeyStore& walletKeyStore,
     const I_CoinSelectionAlgorithm* coinSelector,
+    const TransactionUtxoHasher& utxoHasher,
     const std::vector<COutput>& vCoins,
     const CTxMemPool& mempool,
     CMutableTransaction& txNew,
@@ -2182,7 +2205,7 @@ static std::pair<std::string,bool> SelectInputsProvideSignaturesAndFees(
     txNew.vin.clear();
     // Choose coins to use
     std::set<COutput> setCoins = coinSelector->SelectCoins(txNew,vCoins,nFeeRet);
-    CAmount nValueIn = AttachInputs(setCoins,txNew);
+    CAmount nValueIn = AttachInputs(utxoHasher, setCoins, txNew);
     CAmount nTotalValue = totalValueToSend + nFeeRet;
     if (setCoins.empty() || nValueIn < nTotalValue)
     {
@@ -2244,7 +2267,7 @@ std::pair<std::string,bool> CWallet::CreateTransaction(
     {
         return {translate("Transaction output(s) amount too small"),false};
     }
-    return SelectInputsProvideSignaturesAndFees(*this, coinSelector,vCoins,mempool,txNew,reservekey,wtxNew);
+    return SelectInputsProvideSignaturesAndFees(*this, coinSelector, *utxoHasher, vCoins, mempool, txNew, reservekey, wtxNew);
 }
 
 /**
@@ -2317,6 +2340,11 @@ std::pair<std::string,bool> CWallet::SendMoney(
         return {translate("The transaction was rejected!"),false};
     }
     return {std::string(""),true};
+}
+
+uint256 CWallet::GetUtxoHash(const CMerkleTx& tx) const
+{
+    return utxoHasher->GetUtxoHash(tx);
 }
 
 DBErrors CWallet::LoadWallet()

@@ -5,6 +5,8 @@
 #include <keystore.h>
 #include <I_KeypoolReserver.h>
 
+class CMerkleTx;
+
 class I_StakingCoinSelector
 {
 public:
@@ -17,5 +19,9 @@ class I_StakingWallet: public virtual CKeyStore, public I_StakingCoinSelector, p
 {
 public:
     virtual ~I_StakingWallet(){}
+
+    /** Returns the UTXO hash that should be used for spending outputs
+     *  from the given transaction (which should be part of the wallet).  */
+    virtual uint256 GetUtxoHash(const CMerkleTx& tx) const = 0;
 };
 #endif// I_STAKING_COIN_SELECTOR_H
