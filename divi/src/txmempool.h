@@ -105,7 +105,7 @@ public:
     std::map<uint256, CTxMemPoolEntry> mapTx;
     std::map<COutPoint, CInPoint> mapNextTx;
 
-    explicit CTxMemPool(const CFeeRate& _minRelayFee,
+    explicit CTxMemPool(const CChain& activeChain, const CFeeRate& _minRelayFee,
                         const bool& addressIndex, const bool& spentIndex);
     ~CTxMemPool();
 

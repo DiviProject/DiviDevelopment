@@ -7,6 +7,7 @@
 #include <amount.h>
 #include <uint256.h>
 
+class ActivationState;
 class BlockMap;
 class CTransaction;
 class CValidationState;
@@ -56,7 +57,16 @@ public:
 class BlockUtxoHasher : public TransactionUtxoHasher
 {
 
+private:
+
+  /** The activation state used for checking on segwit light.  */
+  const ActivationState& as;
+
 public:
+
+  explicit BlockUtxoHasher(const ActivationState& a)
+    : as(a)
+  {}
 
   OutputHash GetUtxoHash(const CTransaction& tx) const override;
 

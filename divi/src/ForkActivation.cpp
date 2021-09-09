@@ -28,7 +28,10 @@ const std::unordered_map<Fork, int64_t,std::hash<int>> ACTIVATION_TIMES = {
   {Fork::UniformLotteryWinners, unixTimestampForDec31stMidnight},
   /* FIXME: Schedule for a real time.  */
   {Fork::CheckLockTimeVerify, 2000000000},
-  {Fork::DeprecateMasternodes,2000000000}
+  {Fork::DeprecateMasternodes,2000000000},
+  /* FIXME: Set real activation time for segwit light.  It is after
+     staking vaults.  */
+  {Fork::SegwitLight, 2100000000},
 };
 
 const std::unordered_set<Fork, std::hash<int>> REQUIRE_BLOCK_INDEX_CONTEXT = {

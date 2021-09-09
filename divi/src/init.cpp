@@ -116,7 +116,7 @@ CClientUIInterface uiInterface;
 bool fAddressIndex = false;
 bool fSpentIndex = false;
 const FeeAndPriorityCalculator& feeAndPriorityCalculator = FeeAndPriorityCalculator::instance();
-CTxMemPool mempool(feeAndPriorityCalculator.getMinimumRelayFeeRate(), fAddressIndex, fSpentIndex);
+CTxMemPool mempool(chainActive, feeAndPriorityCalculator.getMinimumRelayFeeRate(), fAddressIndex, fSpentIndex);
 
 bool static InitError(const std::string& str)
 {

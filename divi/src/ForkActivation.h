@@ -24,6 +24,13 @@ enum Fork
   UniformLotteryWinners,
   CheckLockTimeVerify,
   DeprecateMasternodes,
+
+  /**
+   * Start of "segwit light":  The UTXOs created by transactions from after
+   * the fork will be indexed by a "bare txid", which does not include
+   * any signature data.  This fixes transaction malleability.
+   */
+  SegwitLight,
 };
 
 /**

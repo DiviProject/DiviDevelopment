@@ -1,5 +1,6 @@
 #include <UtxoCheckingAndUpdating.h>
 
+#include <ForkActivation.h>
 #include <primitives/transaction.h>
 #include <Logging.h>
 #include <coins.h>
@@ -14,6 +15,8 @@
 
 OutputHash BlockUtxoHasher::GetUtxoHash(const CTransaction& tx) const
 {
+    if (as.IsActive(Fork::SegwitLight))
+        return OutputHash(tx.GetBareTxid());
     return OutputHash(tx.GetHash());
 }
 

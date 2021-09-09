@@ -7,6 +7,7 @@
 #include "txmempool.h"
 
 #include "clientversion.h"
+#include "ForkActivation.h"
 #include "main.h"
 #include "streams.h"
 #include "Logging.h"
@@ -32,14 +33,30 @@ bool IsMemPoolHeight(unsigned coinHeight)
 namespace
 {
 
-/** The UTXO hasher used in mempool logic.  */
+/** The UTXO hasher used in mempool logic.  It uses the state of segwit-light
+ *  based on the latest chain tip (since we can't know when a particular
+ *  transaction will be confirmed / what the real activation state will be then).
+ *  Spending of unconfirmed change around the fork will be discouraged by
+ *  policy, so that this should not be an issue in practice.  */
 class MempoolUtxoHasher : public TransactionUtxoHasher
 {
 
+private:
+
+  /** The active chain for getting the current chain tip.  */
+  const CChain& activeChain;
+
 public:
+
+  explicit MempoolUtxoHasher (const CChain& ca)
+    : activeChain(ca)
+  {}
 
   OutputHash GetUtxoHash(const CTransaction& tx) const override
   {
+      const ActivationState as(activeChain.Tip());
+      if (as.IsActive(Fork::SegwitLight))
+          return OutputHash(tx.GetBareTxid());
       return OutputHash(tx.GetHash());
   }
 
@@ -47,7 +64,7 @@ public:
 
 } // anonymous namespace
 
-CTxMemPool::CTxMemPool(const CFeeRate& _minRelayFee,
+CTxMemPool::CTxMemPool(const CChain& activeChain, const CFeeRate& _minRelayFee,
                        const bool& addressIndex, const bool& spentIndex
     ): fSanityCheck(false)
     , nTransactionsUpdated(0)
@@ -68,7 +85,7 @@ CTxMemPool::CTxMemPool(const CFeeRate& _minRelayFee,
     // than an hour or three to confirm are highly variable.
     // feePolicyEstimator = new CfeePolicyEstimator(25);
 
-    utxoHasher.reset(new MempoolUtxoHasher());
+    utxoHasher.reset(new MempoolUtxoHasher(activeChain));
 }
 
 CTxMemPool::~CTxMemPool()

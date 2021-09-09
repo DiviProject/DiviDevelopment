@@ -44,7 +44,7 @@ public:
 
   MempoolTestFixture()
     : fakeChain(1, 1500000000, 1),
-      testPool(CFeeRate(0), addressIndex, spentIndex),
+      testPool(*fakeChain.activeChain, CFeeRate(0), addressIndex, spentIndex),
       coinsMemPool(nullptr, testPool), coins(&coinsMemPool)
   {
     std::unique_ptr<MockUtxoHasher> utxoHasher(new MockUtxoHasher());

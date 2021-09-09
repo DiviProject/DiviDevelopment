@@ -5,6 +5,7 @@
 #include <chain.h>
 #include <coins.h>
 #include <BlockUndo.h>
+#include <ForkActivation.h>
 #include <Logging.h>
 #include <addressindex.h>
 #include <txdb.h>
@@ -87,7 +88,8 @@ bool ActiveChainManager::DisconnectBlock(
         return error("DisconnectBlock() : block and undo data inconsistent");
     }
 
-    const BlockUtxoHasher utxoHasher;
+    const ActivationState as(pindex);
+    const BlockUtxoHasher utxoHasher(as);
 
     bool fClean = true;
     IndexDatabaseUpdates indexDBUpdates;
