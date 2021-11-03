@@ -5,6 +5,7 @@
 #include <WalletTx.h>
 #include <WalletTransactionRecord.h>
 #include <SpentOutputTracker.h>
+#include <UtxoCheckingAndUpdating.h>
 #include <I_VaultManagerDatabase.h>
 #include <I_MerkleTxConfirmationNumberCalculator.h>
 #include <Logging.h>
@@ -13,8 +14,10 @@ constexpr const char* VAULT_DEPOSIT_DESCRIPTION = "isVaultDeposit";
 
 VaultManager::VaultManager(
     const I_MerkleTxConfirmationNumberCalculator& confirmationsCalculator,
+    const TransactionUtxoHasher& utxoHasher,
     I_VaultManagerDatabase& vaultManagerDB
     ): confirmationsCalculator_(confirmationsCalculator)
+    , utxoHasher_(utxoHasher)
     , vaultManagerDB_(vaultManagerDB)
     , cs_vaultManager_()
     , walletTxRecord_(new WalletTransactionRecord(cs_vaultManager_))
@@ -219,7 +222,6 @@ UnspentOutputs VaultManager::getManagedUTXOs(VaultUTXOFilters filter) const
     auto managedScriptsLimitsCopy = managedScripts_;
     for(const auto& hashAndTransaction: walletTxRecord_->mapWallet)
     {
-        uint256 hash = hashAndTransaction.first;
         const CWalletTx& tx = hashAndTransaction.second;
         if(!( (allInputsAreKnown(tx) && tx.IsCoinStake()) || tx.mapValue.count(VAULT_DEPOSIT_DESCRIPTION) > 0 )) continue;
 
@@ -233,6 +235,7 @@ UnspentOutputs VaultManager::getManagedUTXOs(VaultUTXOFilters filter) const
         if( (filter & VaultUTXOFilters::MATURED) > 0 && blocksTillMaturity > 0 ) continue;
         if( (filter & VaultUTXOFilters::INMATURE) > 0 && blocksTillMaturity < 1 ) continue;
 
+        const uint256 hash = utxoHasher_.GetUtxoHash(tx);
         for(unsigned outputIndex = 0; outputIndex < tx.vout.size(); ++outputIndex)
         {
             const CTxOut& output = tx.vout[outputIndex];
