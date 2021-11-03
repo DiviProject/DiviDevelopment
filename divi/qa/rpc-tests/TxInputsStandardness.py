@@ -28,7 +28,7 @@ class TxInputStandardnessTest (BitcoinTestFramework):
         tx = self.node.getrawtransaction (txid, 1)
         for i in range (len (tx["vout"])):
             if tx["vout"][i]["scriptPubKey"]["addresses"] == [addr]:
-                return (txid, i)
+                return (tx["txid"], i)
 
         raise AssertionError ("failed to find destination address")
 

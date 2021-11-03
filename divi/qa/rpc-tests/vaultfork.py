@@ -31,10 +31,11 @@ class VaultForkTest (BitcoinTestFramework):
         """
 
         txid = owner.fundvault (staker.getnewaddress (), amount)["txhash"]
-        outputs = owner.getrawtransaction (txid, 1)["vout"]
+        data = owner.getrawtransaction (txid, 1)
+        outputs = data["vout"]
         for n in range (len (outputs)):
             if outputs[n]["scriptPubKey"]["type"] == "vault":
-                return {"txid": txid, "vout": n}
+                return {"txid": data["txid"], "vout": n}
 
         raise AssertionError ("constructed transaction has no vault output")
 

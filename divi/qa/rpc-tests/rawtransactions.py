@@ -26,7 +26,7 @@ class RawTransactionsTest (BitcoinTestFramework):
 
         for u in node.listunspent ():
             if u["amount"] == value:
-                return {"txid": u["txid"], "vout": u["vout"]}
+                return {"txid": u["outputhash"], "vout": u["vout"]}
 
         raise AssertionError ("no output with value %s found" % str (value))
 

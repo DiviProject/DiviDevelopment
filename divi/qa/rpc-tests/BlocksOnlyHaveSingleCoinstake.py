@@ -42,7 +42,7 @@ class BlocksOnlyHaveSingleCoinstake (BitcoinTestFramework):
         tx = CTransaction ()
         tx.vout.append( CTxOut(0, CScript() )  )
         tx.vout.append( CTxOut(amountToSend, scriptToSendTo )  )
-        tx.vin.append (CTxIn (COutPoint (txid=inp["txid"], n=inp["vout"])))
+        tx.vin.append (CTxIn (COutPoint (txid=inp["outputhash"], n=inp["vout"])))
 
 
         unsigned = tx.serialize ().hex ()

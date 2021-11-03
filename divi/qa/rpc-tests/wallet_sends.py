@@ -92,7 +92,7 @@ class WalletSends (BitcoinTestFramework):
 
         sender_utxo = sender.listunspent()[0]
         tx = CTransaction ()
-        tx.vin.append (CTxIn (COutPoint (txid=sender_utxo["txid"], n=sender_utxo["vout"])))
+        tx.vin.append (CTxIn (COutPoint (txid=sender_utxo["outputhash"], n=sender_utxo["vout"])))
         tx.vin.append (CTxIn (COutPoint (txid=receiver_utxo[0], n=receiver_utxo[1])))
         tx.vin.append (CTxIn (COutPoint (txid=multisigTxID, n=multisigOutputIndex)))
 
@@ -154,7 +154,7 @@ class WalletSends (BitcoinTestFramework):
 
         sender_utxo = sender.listunspent()[0]
         tx = CTransaction ()
-        tx.vin.append (CTxIn (COutPoint (txid=sender_utxo["txid"], n=sender_utxo["vout"])))
+        tx.vin.append (CTxIn (COutPoint (txid=sender_utxo["outputhash"], n=sender_utxo["vout"])))
         tx.vin.append (CTxIn (COutPoint (txid=receiver_utxo[0], n=receiver_utxo[1])))
 
         amountToSend = int ((Decimal (2500.0) - Decimal ('0.1')) * COIN)
