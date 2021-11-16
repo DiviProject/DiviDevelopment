@@ -63,12 +63,12 @@ protected:
       dummyTxNonVault.vout[i].scriptPubKey = scriptNonVault;
     }
 
-    coins.ModifyCoins(dummyTxVault.GetHash())->FromTx(dummyTxVault, 0);
-    coins.ModifyCoins(dummyTxNonVault.GetHash())->FromTx(dummyTxNonVault, 0);
+    coins.ModifyCoins(OutputHash(dummyTxVault.GetHash()))->FromTx(dummyTxVault, 0);
+    coins.ModifyCoins(OutputHash(dummyTxNonVault.GetHash()))->FromTx(dummyTxNonVault, 0);
 
     for (unsigned i = 0; i < dummyTxVault.vout.size(); ++i) {
-      vaultCoins.emplace_back(dummyTxVault.GetHash(), i);
-      nonVaultCoins.emplace_back(dummyTxNonVault.GetHash(), i);
+      vaultCoins.emplace_back(OutputHash(dummyTxVault.GetHash()), i);
+      nonVaultCoins.emplace_back(OutputHash(dummyTxNonVault.GetHash()), i);
     }
   }
 

@@ -1,10 +1,12 @@
 #include <CoinControlSelectionAlgorithm.h>
 #include <coincontrol.h>
+#include <wallet.h>
 #include <WalletTx.h>
 
 CoinControlSelectionAlgorithm::CoinControlSelectionAlgorithm(
-    const CCoinControl* coinControl
-    ): coinControl_(coinControl)
+    const CCoinControl* coinControl,
+    const CWallet& wallet
+    ): coinControl_(coinControl), wallet_(wallet)
 {
 }
 
@@ -20,7 +22,7 @@ std::set<COutput> CoinControlSelectionAlgorithm::SelectCoins(
         for(const COutput& out: vCoins)
         {
             if (!out.fSpendable ||
-                (!coinControl_->fAllowOtherInputs && !coinControl_->IsSelected(out.tx->GetHash(),out.i)))
+                (!coinControl_->fAllowOtherInputs && !coinControl_->IsSelected(wallet_.GetUtxoHash(*out.tx),out.i)))
             {
                 continue;
             }

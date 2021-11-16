@@ -8,6 +8,7 @@
 #define BITCOIN_TXMEMPOOL_H
 
 #include <list>
+#include <memory>
 
 #include "addressindex.h"
 #include "spentindex.h"
@@ -20,6 +21,7 @@
 
 class BlockMap;
 class CAutoFile;
+class TransactionUtxoHasher;
 
 /** Fake height value used in CCoins to signify they are only in the memory pool (since 0.8) */
 bool IsMemPoolHeight(unsigned coinHeight);
@@ -62,6 +64,7 @@ private:
     bool fSanityCheck; //! Normally false, true if -checkmempool or -regtest
     unsigned int nTransactionsUpdated;
     std::unique_ptr<FeePolicyEstimator> feePolicyEstimator;
+    std::unique_ptr<TransactionUtxoHasher> utxoHasher;
 
     const CFeeRate& minRelayFee; //! Passed to constructor to avoid dependency on main
     uint64_t totalTxSize; //! sum of all mempool tx' byte sizes
@@ -102,7 +105,7 @@ public:
     std::map<uint256, CTxMemPoolEntry> mapTx;
     std::map<COutPoint, CInPoint> mapNextTx;
 
-    explicit CTxMemPool(const CFeeRate& _minRelayFee,
+    explicit CTxMemPool(const CChain& activeChain, const CFeeRate& _minRelayFee,
                         const bool& addressIndex, const bool& spentIndex);
     ~CTxMemPool();
 
@@ -121,7 +124,7 @@ public:
     void removeConfirmedTransactions(const std::vector<CTransaction>& vtx, unsigned int nBlockHeight, std::list<CTransaction>& conflicts);
     void clear();
     void queryHashes(std::vector<uint256>& vtxid);
-    void pruneSpent(const uint256& hash, CCoins& coins);
+    void pruneSpent(const OutputHash& hash, CCoins& coins);
     unsigned int GetTransactionsUpdated() const;
     void AddTransactionsUpdated(unsigned int n);
 
@@ -129,6 +132,13 @@ public:
                          std::vector<std::pair<CMempoolAddressDeltaKey, CMempoolAddressDelta> > &results);
 
     bool getSpentIndex(const CSpentIndexKey &key, CSpentIndexValue &value);
+
+    /** Returns the UTXO hasher instance used in the mempool.  */
+    const TransactionUtxoHasher& GetUtxoHasher() const;
+
+    /** Replaces the UTXO hasher used in the mempool with the given instance,
+     *  which allows dependency injection for unit tests.  */
+    void SetUtxoHasherForTesting(std::unique_ptr<TransactionUtxoHasher> hasher);
 
     /** Affect CreateNewBlock prioritisation of transactions */
     bool IsPrioritizedTransaction(const uint256 hash);
@@ -164,7 +174,7 @@ public:
 
     /** Looks up a transaction by its outpoint for spending, taking potential changes
      *  from the raw txid (e.g. segwit light) into account.  */
-    bool lookupOutpoint(const uint256& hash, CTransaction& result) const;
+    bool lookupOutpoint(const OutputHash& hash, CTransaction& result) const;
 
     /** Estimate fee rate needed to get into the next nBlocks */
     CFeeRate estimateFee(int nBlocks) const;
@@ -188,9 +198,9 @@ protected:
 
 public:
     CCoinsViewMemPool(CCoinsView* baseIn, CTxMemPool& mempoolIn);
-    bool GetCoins(const uint256& txid, CCoins& coins) const override;
-    bool HaveCoins(const uint256& txid) const override;
-    bool GetCoinsAndPruneSpent(const uint256& txid,CCoins& coins) const;
+    bool GetCoins(const OutputHash& txid, CCoins& coins) const override;
+    bool HaveCoins(const OutputHash& txid) const override;
+    bool GetCoinsAndPruneSpent(const OutputHash& txid, CCoins& coins) const;
 };
 class CValidationState;
 bool SubmitTransactionToMempool(CTxMemPool& mempool, const CTransaction& tx);

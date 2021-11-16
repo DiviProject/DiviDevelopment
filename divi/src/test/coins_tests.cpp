@@ -19,10 +19,10 @@ namespace
 class CCoinsViewTest : public CCoinsView
 {
     uint256 hashBestBlock_;
-    std::map<uint256, CCoins> map_;
+    std::map<OutputHash, CCoins> map_;
 
 public:
-    bool GetCoins(const uint256& txid, CCoins& coins) const override
+    bool GetCoins(const OutputHash& txid, CCoins& coins) const override
     {
         auto it = map_.find(txid);
         if (it == map_.end()) {
@@ -36,7 +36,7 @@ public:
         return true;
     }
 
-    bool HaveCoins(const uint256& txid) const override
+    bool HaveCoins(const OutputHash& txid) const override
     {
         CCoins coins;
         return GetCoins(txid, coins);
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(coins_cache_simulation_test)
     bool missed_an_entry = false;
 
     // A simple map to track what we expect the cache stack to represent.
-    std::map<uint256, CCoins> result;
+    std::map<OutputHash, CCoins> result;
 
     // The cache stack.
     CCoinsViewTest base; // A CCoinsViewTest at the bottom.
@@ -96,16 +96,16 @@ BOOST_AUTO_TEST_CASE(coins_cache_simulation_test)
     stack.push_back(new CCoinsViewCache(&base)); // Start with one cache.
 
     // Use a limited set of random transaction ids, so we do test overwriting entries.
-    std::vector<uint256> txids;
+    std::vector<OutputHash> txids;
     txids.resize(NUM_SIMULATION_ITERATIONS / 8);
     for (unsigned int i = 0; i < txids.size(); i++) {
-        txids[i] = GetRandHash();
+        txids[i] = OutputHash(GetRandHash());
     }
 
     for (unsigned int i = 0; i < NUM_SIMULATION_ITERATIONS; i++) {
         // Do a random modification.
         {
-            uint256 txid = txids[insecure_rand() % txids.size()]; // txid we're going to modify in this iteration.
+            OutputHash txid = txids[insecure_rand() % txids.size()]; // txid we're going to modify in this iteration.
             CCoins& coins = result[txid];
             CCoinsModifier entry = stack.back()->ModifyCoins(txid);
             BOOST_CHECK(coins == *entry);

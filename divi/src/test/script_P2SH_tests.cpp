@@ -45,7 +45,7 @@ Verify(const CScript& scriptSig, const CScript& scriptPubKey, bool fStrict, Scri
     txTo.vin.resize(1);
     txTo.vout.resize(1);
     txTo.vin[0].prevout.n = 0;
-    txTo.vin[0].prevout.hash = txFrom.GetHash();
+    txTo.vin[0].prevout.hash = OutputHash(txFrom.GetHash());
     txTo.vin[0].scriptSig = scriptSig;
     txTo.vout[0].nValue = 1;
 
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(sign)
         txTo[i].vin.resize(1);
         txTo[i].vout.resize(1);
         txTo[i].vin[0].prevout.n = i;
-        txTo[i].vin[0].prevout.hash = txFrom.GetHash();
+        txTo[i].vin[0].prevout.hash = OutputHash(txFrom.GetHash());
         txTo[i].vout[0].nValue = 1;
 #ifdef ENABLE_WALLET
         BOOST_CHECK_MESSAGE(IsMine(keystore, txFrom.vout[i].scriptPubKey) != isminetype::ISMINE_NO, strprintf("IsMine %d", i));
@@ -207,7 +207,7 @@ BOOST_AUTO_TEST_CASE(set)
         txTo[i].vin.resize(1);
         txTo[i].vout.resize(1);
         txTo[i].vin[0].prevout.n = i;
-        txTo[i].vin[0].prevout.hash = txFrom.GetHash();
+        txTo[i].vin[0].prevout.hash = OutputHash(txFrom.GetHash());
         txTo[i].vout[0].nValue = 1*CENT;
         txTo[i].vout[0].scriptPubKey = inner[i];
 #ifdef ENABLE_WALLET
@@ -334,7 +334,7 @@ BOOST_AUTO_TEST_CASE(AreInputsStandard)
     txFrom.vout[6].scriptPubKey = GetScriptForDestination(CScriptID(twentySigops));
     txFrom.vout[6].nValue = 6000;
 
-    coins.ModifyCoins(txFrom.GetHash())->FromTx(txFrom, 0);
+    coins.ModifyCoins(OutputHash(txFrom.GetHash()))->FromTx(txFrom, 0);
 
     CMutableTransaction txTo;
     txTo.vout.resize(1);
@@ -344,7 +344,7 @@ BOOST_AUTO_TEST_CASE(AreInputsStandard)
     for (int i = 0; i < 5; i++)
     {
         txTo.vin[i].prevout.n = i;
-        txTo.vin[i].prevout.hash = txFrom.GetHash();
+        txTo.vin[i].prevout.hash = OutputHash(txFrom.GetHash());
     }
     BOOST_CHECK(SignSignature(keystore, txFrom, txTo, 0));
     BOOST_CHECK(SignSignature(keystore, txFrom, txTo, 1));
@@ -375,7 +375,7 @@ BOOST_AUTO_TEST_CASE(AreInputsStandard)
     txToNonStd1.vout[0].nValue = 1000;
     txToNonStd1.vin.resize(1);
     txToNonStd1.vin[0].prevout.n = 5;
-    txToNonStd1.vin[0].prevout.hash = txFrom.GetHash();
+    txToNonStd1.vin[0].prevout.hash = OutputHash(txFrom.GetHash());
     txToNonStd1.vin[0].scriptSig << static_cast<vector<unsigned char> >(sixteenSigops);
 
     BOOST_CHECK(!::AreInputsStandard(txToNonStd1, coins));
@@ -387,7 +387,7 @@ BOOST_AUTO_TEST_CASE(AreInputsStandard)
     txToNonStd2.vout[0].nValue = 1000;
     txToNonStd2.vin.resize(1);
     txToNonStd2.vin[0].prevout.n = 6;
-    txToNonStd2.vin[0].prevout.hash = txFrom.GetHash();
+    txToNonStd2.vin[0].prevout.hash = OutputHash(txFrom.GetHash());
     txToNonStd2.vin[0].scriptSig << static_cast<vector<unsigned char> >(twentySigops);
 
     BOOST_CHECK(!::AreInputsStandard(txToNonStd2, coins));

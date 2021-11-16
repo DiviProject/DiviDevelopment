@@ -116,7 +116,7 @@ CClientUIInterface uiInterface;
 bool fAddressIndex = false;
 bool fSpentIndex = false;
 const FeeAndPriorityCalculator& feeAndPriorityCalculator = FeeAndPriorityCalculator::instance();
-CTxMemPool mempool(feeAndPriorityCalculator.getMinimumRelayFeeRate(), fAddressIndex, fSpentIndex);
+CTxMemPool mempool(chainActive, feeAndPriorityCalculator.getMinimumRelayFeeRate(), fAddressIndex, fSpentIndex);
 
 bool static InitError(const std::string& str)
 {
@@ -176,7 +176,7 @@ class CCoinsViewErrorCatcher : public CCoinsViewBacked
 {
 public:
     CCoinsViewErrorCatcher(CCoinsView* view) : CCoinsViewBacked(view) {}
-    bool GetCoins(const uint256& txid, CCoins& coins) const override
+    bool GetCoins(const OutputHash& txid, CCoins& coins) const override
     {
         try {
             return CCoinsViewBacked::GetCoins(txid, coins);

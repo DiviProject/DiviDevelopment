@@ -417,7 +417,7 @@ Value gettxout(const Array& params, bool fHelp)
             "gettxout \"txid\" n ( includemempool )\n"
             "\nReturns details about an unspent transaction output.\n"
             "\nArguments:\n"
-            "1. \"txid\"       (string, required) The transaction id\n"
+            "1. \"txid\"       (string, required) The transaction id or bare txid (after segwit-light)\n"
             "2. n              (numeric, required) vout value\n"
             "3. includemempool  (boolean, optional) Whether to included the mem pool\n"
             "\nResult:\n"
@@ -447,8 +447,8 @@ Value gettxout(const Array& params, bool fHelp)
 
     Object ret;
 
-    std::string strHash = params[0].get_str();
-    uint256 hash(strHash);
+    const std::string strHash = params[0].get_str();
+    const OutputHash hash(uint256S(strHash));
     int n = params[1].get_int();
     bool fMempool = true;
     if (params.size() > 2)

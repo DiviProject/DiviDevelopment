@@ -13,6 +13,7 @@
 #include "checkpoints.h"
 #include <chain.h>
 #include <chainparams.h>
+#include "ForkActivation.h"
 #include "net.h"
 #include "script/script.h"
 #include "script/sign.h"
@@ -30,6 +31,7 @@
 #include <Logging.h>
 #include <StakableCoin.h>
 #include <SpentOutputTracker.h>
+#include <UtxoCheckingAndUpdating.h>
 #include <WalletTx.h>
 #include <WalletTransactionRecord.h>
 #include <I_CoinSelectionAlgorithm.h>
@@ -42,6 +44,13 @@
 extern Settings& settings;
 
 const FeeAndPriorityCalculator& priorityFeeCalculator = FeeAndPriorityCalculator::instance();
+
+/** Number of seconds around the "segwit light" fork for which we force
+ *  not spending unconfirmed change (to avoid messing up with the change
+ *  itself).  This should be larger than the matching constant for the
+ *  mempool (so the wallet does not construct things the mempool won't
+ *  accept in the end).  */
+constexpr int SEGWIT_LIGHT_DISABLE_SPENDING_ZERO_CONF_SECONDS = 43200;
 
 extern CCriticalSection cs_main;
 extern CTxMemPool mempool;
@@ -172,6 +181,50 @@ std::set<CTxDestination> AddressBookManager::GetAccountAddresses(std::string str
     return result;
 }
 
+namespace
+{
+
+/** UTXO hasher for wallet transactions.  It uses the transaction's known block
+ *  hash (from CMerkleTx) to determine the activation state of segwit light.  */
+class WalletUtxoHasher : public TransactionUtxoHasher
+{
+
+private:
+
+  const I_MerkleTxConfirmationNumberCalculator& confirmationNumberCalculator_;
+  const CChain& chainActive_;
+
+public:
+
+  WalletUtxoHasher(const I_MerkleTxConfirmationNumberCalculator& calc, const CChain& chain)
+    : confirmationNumberCalculator_(calc), chainActive_(chain)
+  {}
+
+  OutputHash GetUtxoHash(const CTransaction& tx) const override
+  {
+    const CMerkleTx* mtx = dynamic_cast<const CMerkleTx*>(&tx);
+    assert(mtx != nullptr);
+
+    const auto conf = confirmationNumberCalculator_.FindConfirmedBlockIndexAndDepth(*mtx);
+    const CBlockIndex* pindexBlock = conf.first;
+
+    /* If the transaction is not yet confirmed in a block, we use the current
+       tip to determine the segwit-light activation status.  This is not
+       perfect around the activation time, but there is nothing we can do
+       in that case anyway.  Mempool and wallet discourage spending unconfirmed
+       outputs around the segwit-light fork anyway.  */
+    if (conf.second <= 0)
+        pindexBlock = chainActive_.Tip();
+
+    assert(pindexBlock != nullptr);
+    const ActivationState as(pindexBlock);
+
+    return OutputHash(as.IsActive(Fork::SegwitLight) ? mtx->GetBareTxid() : mtx->GetHash());
+  }
+
+};
+
+} // anonymous namespace
 
 CWallet::CWallet(const CChain& chain, const BlockMap& blockMap
     ): cs_wallet()
@@ -191,6 +244,7 @@ CWallet::CWallet(const CChain& chain, const BlockMap& blockMap
     , transactionRecord_(new WalletTransactionRecord(cs_wallet,strWalletFile) )
     , outputTracker_( new SpentOutputTracker(*transactionRecord_,*confirmationNumberCalculator_) )
     , pwalletdbEncryption()
+    , utxoHasher(new WalletUtxoHasher(*confirmationNumberCalculator_, chain) )
     , nWalletVersion(FEATURE_BASE)
     , nWalletMaxVersion(FEATURE_BASE)
     , mapKeyMetadata()
@@ -247,7 +301,7 @@ void CWallet::activateVaultMode()
         const std::string keystring = vchDefaultKey.GetID().ToString();
         const std::string vaultID = std::string("vault_") + Hash160(keystring.begin(),keystring.end()).ToString().substr(0,10);
         vaultDB_.reset(new VaultManagerDatabase(vaultID,0));
-        vaultManager_.reset(new VaultManager(*confirmationNumberCalculator_,*vaultDB_));
+        vaultManager_.reset(new VaultManager(*confirmationNumberCalculator_, *utxoHasher, *vaultDB_));
         for(const std::string& whitelistedVaultScript: settings.GetMultiParameter("-whitelisted_vault"))
         {
             auto byteVector = ParseHex(whitelistedVaultScript);
@@ -483,7 +537,7 @@ CAmount CWallet::ComputeCredit(const CWalletTx& tx, const UtxoOwnershipFilter& f
 {
     const CAmount maxMoneyAllowedInOutput = Params().MaxMoneyOut();
     CAmount nCredit = 0;
-    uint256 hash = tx.GetHash();
+    const auto hash = GetUtxoHash(tx);
     for (unsigned int i = 0; i < tx.vout.size(); i++) {
         if( (creditFilterFlags & REQUIRE_UNSPENT) && IsSpent(tx,i)) continue;
         if( (creditFilterFlags & REQUIRE_UNLOCKED) && IsLockedCoin(hash,i)) continue;
@@ -566,6 +620,12 @@ const CWalletTx* CWallet::GetWalletTx(const uint256& hash) const
     LOCK(cs_wallet);
     return transactionRecord_->GetWalletTx(hash);
 }
+
+const CWalletTx* CWallet::GetWalletTx(const OutputHash& hash) const
+{
+    return GetWalletTx(hash.GetValue());
+}
+
 std::vector<const CWalletTx*> CWallet::GetWalletTransactionReferences() const
 {
     LOCK(cs_wallet);
@@ -1100,7 +1160,7 @@ std::set<uint256> CWallet::GetConflicts(const uint256& txid) const
  */
 bool CWallet::IsSpent(const CWalletTx& wtx, unsigned int n) const
 {
-    return outputTracker_->IsSpent(wtx.GetHash(), n);
+    return outputTracker_->IsSpent(GetUtxoHash(wtx), n);
 }
 
 bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
@@ -1694,7 +1754,7 @@ bool CWallet::IsAvailableForSpending(
         return false;
     }
 
-    const uint256 hash = pcoin->GetHash();
+    const auto hash = GetUtxoHash(*pcoin);
 
     if (IsSpent(*pcoin, i))
         return false;
@@ -1865,7 +1925,7 @@ bool CWallet::SelectStakeCoins(std::set<StakableCoin>& setCoins) const
             continue;
 
         //add to our stake set
-        setCoins.emplace(*out.tx, COutPoint(out.tx->GetHash(), out.i), out.tx->hashBlock);
+        setCoins.emplace(*out.tx, COutPoint(GetUtxoHash(*out.tx), out.i), out.tx->hashBlock);
         nAmountSelected += out.tx->vout[out.i].nValue;
     }
     return true;
@@ -1990,6 +2050,12 @@ bool CWallet::SelectCoinsMinConf(
         }
     }
     return true;
+}
+
+bool CWallet::AllowSpendingZeroConfirmationChange() const
+{
+    return allowSpendingZeroConfirmationOutputs
+        && !ActivationState::CloseToSegwitLight(SEGWIT_LIGHT_DISABLE_SPENDING_ZERO_CONF_SECONDS);
 }
 
 void AppendOutputs(
@@ -2150,6 +2216,7 @@ static bool SetChangeOutput(
 }
 
 static CAmount AttachInputs(
+    const TransactionUtxoHasher& utxoHasher,
     const std::set<COutput>& setCoins,
     CMutableTransaction& txWithoutChange)
 {
@@ -2157,7 +2224,7 @@ static CAmount AttachInputs(
     CAmount nValueIn = 0;
     for(const COutput& coin: setCoins)
     {
-        txWithoutChange.vin.emplace_back(coin.tx->GetHash(), coin.i);
+        txWithoutChange.vin.emplace_back(utxoHasher.GetUtxoHash(*coin.tx), coin.i);
         nValueIn += coin.Value();
     }
     return nValueIn;
@@ -2166,6 +2233,7 @@ static CAmount AttachInputs(
 static std::pair<std::string,bool> SelectInputsProvideSignaturesAndFees(
     const CKeyStore& walletKeyStore,
     const I_CoinSelectionAlgorithm* coinSelector,
+    const TransactionUtxoHasher& utxoHasher,
     const std::vector<COutput>& vCoins,
     const CTxMemPool& mempool,
     CMutableTransaction& txNew,
@@ -2182,7 +2250,7 @@ static std::pair<std::string,bool> SelectInputsProvideSignaturesAndFees(
     txNew.vin.clear();
     // Choose coins to use
     std::set<COutput> setCoins = coinSelector->SelectCoins(txNew,vCoins,nFeeRet);
-    CAmount nValueIn = AttachInputs(setCoins,txNew);
+    CAmount nValueIn = AttachInputs(utxoHasher, setCoins, txNew);
     CAmount nTotalValue = totalValueToSend + nFeeRet;
     if (setCoins.empty() || nValueIn < nTotalValue)
     {
@@ -2244,7 +2312,7 @@ std::pair<std::string,bool> CWallet::CreateTransaction(
     {
         return {translate("Transaction output(s) amount too small"),false};
     }
-    return SelectInputsProvideSignaturesAndFees(*this, coinSelector,vCoins,mempool,txNew,reservekey,wtxNew);
+    return SelectInputsProvideSignaturesAndFees(*this, coinSelector, *utxoHasher, vCoins, mempool, txNew, reservekey, wtxNew);
 }
 
 /**
@@ -2270,7 +2338,7 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey)
 
             // Notify that old coins are spent
             {
-                std::set<uint256> updated_hashes;
+                std::set<OutputHash> updated_hashes;
                 BOOST_FOREACH (const CTxIn& txin, wtxNew.vin) {
                     // notify only once
                     if (updated_hashes.find(txin.prevout.hash) != updated_hashes.end()) continue;
@@ -2317,6 +2385,16 @@ std::pair<std::string,bool> CWallet::SendMoney(
         return {translate("The transaction was rejected!"),false};
     }
     return {std::string(""),true};
+}
+
+OutputHash CWallet::GetUtxoHash(const CMerkleTx& tx) const
+{
+    return utxoHasher->GetUtxoHash(tx);
+}
+
+void CWallet::SetUtxoHasherForTesting(std::unique_ptr<TransactionUtxoHasher> hasher)
+{
+    utxoHasher = std::move(hasher);
 }
 
 DBErrors CWallet::LoadWallet()
@@ -2748,7 +2826,7 @@ bool CWallet::IsTrusted(const CWalletTx& walletTransaction) const
         return true;
     if (nDepth < 0)
         return false;
-    if (!allowSpendingZeroConfirmationOutputs || !DebitsFunds(walletTransaction, isminetype::ISMINE_SPENDABLE)) // using wtx's cached debit
+    if (!AllowSpendingZeroConfirmationChange() || !DebitsFunds(walletTransaction, isminetype::ISMINE_SPENDABLE)) // using wtx's cached debit
         return false;
 
     // Trusted if all inputs are from us and are in the mempool:
@@ -2785,7 +2863,7 @@ void CWallet::UnlockAllCoins()
     setLockedCoins.clear();
 }
 
-bool CWallet::IsLockedCoin(const uint256& hash, unsigned int n) const
+bool CWallet::IsLockedCoin(const OutputHash& hash, unsigned int n) const
 {
     AssertLockHeld(cs_wallet); // setLockedCoins
     COutPoint outpt(hash, n);

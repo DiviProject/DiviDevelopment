@@ -8,6 +8,7 @@
 #define BITCOIN_PRIMITIVES_TRANSACTION_H
 
 #include "amount.h"
+#include "OutputHash.h"
 #include "script/script.h"
 #include "serialize.h"
 #include "uint256.h"
@@ -18,11 +19,11 @@
 class COutPoint
 {
 public:
-    uint256 hash;
+    OutputHash hash;
     uint32_t n;
 
     COutPoint();
-    COutPoint(const uint256& hashIn, uint32_t nIn);
+    COutPoint(const OutputHash& hashIn, uint32_t nIn);
 
     ADD_SERIALIZE_METHODS;
 
@@ -57,7 +58,7 @@ public:
 
     CTxIn();
     explicit CTxIn(COutPoint prevoutIn, CScript scriptSigIn=CScript(), uint32_t nSequenceIn=std::numeric_limits<uint32_t>::max());
-    CTxIn(const uint256& hashPrevTx, uint32_t nOut, CScript scriptSigIn=CScript(), uint32_t nSequenceIn=std::numeric_limits<uint32_t>::max());
+    CTxIn(const OutputHash& hashPrevTx, uint32_t nOut, CScript scriptSigIn=CScript(), uint32_t nSequenceIn=std::numeric_limits<uint32_t>::max());
 
     ADD_SERIALIZE_METHODS;
 
@@ -137,6 +138,8 @@ public:
     CTransaction(const CMutableTransaction &tx);
 
     CTransaction& operator=(const CTransaction& tx);
+
+    virtual ~CTransaction() = default;
 
     ADD_SERIALIZE_METHODS;
 

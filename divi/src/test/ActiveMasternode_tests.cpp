@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(willNotEnableMasternodeOnEmptyConfigurations)
 
 BOOST_AUTO_TEST_CASE(willEnableMasternodeOnMatchingUTXO)
 {
-    uint256 dummyHash = GetRandHash();
+    const OutputHash dummyHash(GetRandHash());
     uint32_t out = 0;
     CTxIn validTxIn (dummyHash, out);
     CService service;
@@ -84,10 +84,10 @@ BOOST_AUTO_TEST_CASE(willNotEnableMasternodeOnMismatchedUTXO)
 {
     uint32_t out = 0;
 
-    uint256 correctDummyHash = GetRandHash();
+    const OutputHash correctDummyHash(GetRandHash());
     CTxIn validTxIn (correctDummyHash, out);
 
-    uint256 wrongDummyHash = GetRandHash();
+    const OutputHash wrongDummyHash(GetRandHash());
     CTxIn wrongTxIn (wrongDummyHash, out);
 
 
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(willResetStatusToSyncInProgressWhenChainSyncIsRequired)
 {
     uint256 dummyHash = GetRandHash();
     uint32_t out = 0;
-    CTxIn validTxIn (dummyHash, out);
+    CTxIn validTxIn (OutputHash(dummyHash), out);
     CService service;
 
     AddDummyConfiguration(validTxIn, service);

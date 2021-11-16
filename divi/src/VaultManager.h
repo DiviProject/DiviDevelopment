@@ -14,6 +14,7 @@ using UnspentOutputs = std::vector<COutput>;
 class CTransaction;
 class CBlock;
 class CWalletTx;
+class TransactionUtxoHasher;
 class uint256;
 class CTxOut;
 
@@ -37,6 +38,7 @@ private:
     const I_MerkleTxConfirmationNumberCalculator& confirmationsCalculator_;
     I_VaultManagerDatabase& vaultManagerDB_;
     mutable CCriticalSection cs_vaultManager_;
+    const TransactionUtxoHasher& utxoHasher_;
     std::unique_ptr<WalletTransactionRecord> walletTxRecord_;
     std::unique_ptr<SpentOutputTracker> outputTracker_;
     ManagedScripts managedScripts_;
@@ -50,6 +52,7 @@ private:
 public:
     VaultManager(
         const I_MerkleTxConfirmationNumberCalculator& confirmationsCalculator,
+        const TransactionUtxoHasher& utxoHasher,
         I_VaultManagerDatabase& vaultManagerDB);
     ~VaultManager();
 

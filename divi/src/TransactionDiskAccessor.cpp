@@ -58,7 +58,7 @@ bool GetTransaction(const uint256& hash, CTransaction& txOut, uint256& hashBlock
             int nHeight = -1;
             {
                 CCoinsViewCache& view = *pcoinsTip;
-                const CCoins* coins = view.AccessCoins(hash);
+                const CCoins* coins = view.AccessCoins(OutputHash(hash));
                 if (coins)
                     nHeight = coins->nHeight;
             }
@@ -81,6 +81,11 @@ bool GetTransaction(const uint256& hash, CTransaction& txOut, uint256& hashBlock
     }
 
     return false;
+}
+
+bool GetTransaction(const OutputHash& hash, CTransaction& txOut, uint256& hashBlock, bool fAllowSlow)
+{
+    return GetTransaction(hash.GetValue(), txOut, hashBlock, fAllowSlow);
 }
 
 bool CollateralIsExpectedAmount(const COutPoint &outpoint, int64_t expectedAmount)

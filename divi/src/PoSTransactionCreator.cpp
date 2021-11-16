@@ -146,7 +146,7 @@ void PoSTransactionCreator::CombineUtxos(
     for(const StakableCoin& pcoin : stakedCoins_->asSet())
     {
         if(pcoin.GetTxOut().scriptPubKey == txNew.vout[1].scriptPubKey &&
-            pcoin.tx->GetHash() != txNew.vin[0].prevout.hash)
+            wallet_.GetUtxoHash(*pcoin.tx) != txNew.vin[0].prevout.hash)
         {
             if(pcoin.GetTxOut().nValue + nCredit > nCombineThreshold)
                 continue;

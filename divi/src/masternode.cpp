@@ -163,7 +163,7 @@ static uint256 CalculateScoreHelper(CHashWriter hashWritter, int round)
 //
 uint256 CMasternode::CalculateScore(const uint256& scoringBlockHash) const
 {
-    const uint256 aux = vin.prevout.hash + vin.prevout.n;
+    const uint256 aux = vin.prevout.hash.GetValue() + vin.prevout.n;
     const size_t nHashRounds = GetHashRoundsForTierMasternodes(static_cast<MasternodeTier>(nTier));
 
     CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);

@@ -11,7 +11,7 @@
 #include "serialize.h"
 
 struct CSpentIndexKey {
-    uint256 txid;
+    OutputHash txid;
     unsigned int outputIndex;
 
     ADD_SERIALIZE_METHODS;
@@ -22,7 +22,7 @@ struct CSpentIndexKey {
         READWRITE(outputIndex);
     }
 
-    CSpentIndexKey(const uint256& t, unsigned int i) {
+    CSpentIndexKey(const OutputHash& t, unsigned int i) {
         txid = t;
         outputIndex = i;
     }

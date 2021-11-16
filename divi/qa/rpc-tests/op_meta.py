@@ -46,7 +46,11 @@ class OpMetaTest (BitcoinTestFramework):
         inp = None
         for i in range (len (utxos)):
           if utxos[i]["amount"] >= required:
-            inp = utxos[i]
+            inp = {
+              "txid": utxos[i]["outputhash"],
+              "vout": utxos[i]["vout"],
+              "amount": utxos[i]["amount"],
+            }
             del utxos[i]
             break
         assert inp is not None, "found no suitable output"
@@ -59,8 +63,9 @@ class OpMetaTest (BitcoinTestFramework):
         tx = self.node.createrawtransaction ([inp], {changeAddr: change})
         signed = self.node.signrawtransaction (tx)
         assert_equal (signed["complete"], True)
-        txid = self.node.sendrawtransaction (signed["hex"])
-        inp["txid"] = txid
+        data = self.node.decoderawtransaction (signed["hex"])
+        self.node.sendrawtransaction (signed["hex"])
+        inp["txid"] = data["txid"]
         inp["vout"] = 0
         inp["amount"] = change
 

@@ -216,17 +216,6 @@ def connect_nodes_bi(nodes, a, b):
     connect_nodes(nodes[a], b)
     connect_nodes(nodes[b], a)
 
-def find_output(node, txid, amount):
-    """
-    Return index to output of txid with value amount
-    Raises exception if there is none.
-    """
-    txdata = node.getrawtransaction(txid, 1)
-    for i in range(len(txdata["vout"])):
-        if txdata["vout"][i]["value"] == amount:
-            return i
-    raise RuntimeError("find_output txid %s : %s not found"%(txid,str(amount)))
-
 def gather_inputs(from_node, amount_needed, confirmations_required=1):
     """
     Return a random set of unspent txouts that are enough to pay amount_needed
@@ -239,7 +228,7 @@ def gather_inputs(from_node, amount_needed, confirmations_required=1):
     while total_in < amount_needed and len(utxo) > 0:
         t = utxo.pop()
         total_in += t["amount"]
-        inputs.append({ "txid" : t["txid"], "vout" : t["vout"], "address" : t["address"] } )
+        inputs.append({ "txid" : t["outputhash"], "vout" : t["vout"], "address" : t["address"] } )
     if total_in < amount_needed:
         raise RuntimeError("Insufficient funds: need %d, have %d"%(amount_needed, total_in))
     return (total_in, inputs)

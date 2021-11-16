@@ -29,6 +29,8 @@
 #include <I_StakingCoinSelector.h>
 #include <I_WalletLoader.h>
 
+#include <memory>
+
 class I_CoinSelectionAlgorithm;
 class CKeyMetadata;
 class CKey;
@@ -39,6 +41,7 @@ class CBlockIndex;
 struct StakableCoin;
 class WalletTransactionRecord;
 class SpentOutputTracker;
+class TransactionUtxoHasher;
 class BlockMap;
 class CChain;
 class CCoinControl;
@@ -159,6 +162,7 @@ private:
     std::unique_ptr<WalletTransactionRecord> transactionRecord_;
     std::unique_ptr<SpentOutputTracker> outputTracker_;
     std::unique_ptr<CWalletDB> pwalletdbEncryption;
+    std::unique_ptr<TransactionUtxoHasher> utxoHasher;
 
     int nWalletVersion;   //! the current wallet version: clients below this version are not able to load the wallet
     int nWalletMaxVersion;//! the maximum wallet format version: memory-only variable that specifies to what version this wallet may be upgraded
@@ -195,6 +199,11 @@ private:
     isminetype IsMine(const CScript& scriptPubKey) const;
     isminetype IsMine(const CTxIn& txin) const;
     bool IsMine(const CTransaction& tx) const;
+
+    /** Returns true if the wallet should allow spending of unconfirmed change.
+     *  This is mostly determined by allowSpendingZeroConfirmationOutputs,
+     *  but is forced to off around the segwit-light fork.  */
+    bool AllowSpendingZeroConfirmationChange() const;
 
 protected:
     // CWalletDB: load from disk methods
@@ -252,6 +261,7 @@ public:
 
 
     const CWalletTx* GetWalletTx(const uint256& hash) const;
+    const CWalletTx* GetWalletTx(const OutputHash& hash) const;
     std::vector<const CWalletTx*> GetWalletTransactionReferences() const;
     void RelayWalletTransaction(const CWalletTx& walletTransaction);
 
@@ -281,11 +291,16 @@ public:
         CAmount& nValueRet);
 
     bool IsTrusted(const CWalletTx& walletTransaction) const;
-    bool IsLockedCoin(const uint256& hash, unsigned int n) const;
+    bool IsLockedCoin(const OutputHash& hash, unsigned int n) const;
     void LockCoin(const COutPoint& output);
     void UnlockCoin(const COutPoint& output);
     void UnlockAllCoins();
     void ListLockedCoins(CoinVector& vOutpts);
+
+    OutputHash GetUtxoHash(const CMerkleTx& tx) const override;
+
+    /** Replaces the UTXO hasher used in the wallet, for testing purposes.  */
+    void SetUtxoHasherForTesting(std::unique_ptr<TransactionUtxoHasher> hasher);
 
     //  keystore implementation
     // Generate a new key

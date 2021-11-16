@@ -10,13 +10,14 @@
 #include <Settings.h>
 #include <DataDirectory.h>
 #include <Logging.h>
+#include <OutputHash.h>
 #include <primitives/transaction.h>
 
 // clang-format on
 
 bool CMasternodeConfig::CMasternodeEntry::parseInputReference(COutPoint& outp) const
 {
-    outp.hash = uint256S(getTxHash());
+    outp.hash = OutputHash(uint256S(getTxHash()));
 
     try {
         outp.n = std::stoi(getOutputIndex().c_str());

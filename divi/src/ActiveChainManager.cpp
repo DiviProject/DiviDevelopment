@@ -5,6 +5,7 @@
 #include <chain.h>
 #include <coins.h>
 #include <BlockUndo.h>
+#include <ForkActivation.h>
 #include <Logging.h>
 #include <addressindex.h>
 #include <txdb.h>
@@ -87,12 +88,15 @@ bool ActiveChainManager::DisconnectBlock(
         return error("DisconnectBlock() : block and undo data inconsistent");
     }
 
+    const ActivationState as(pindex);
+    const BlockUtxoHasher utxoHasher(as);
+
     bool fClean = true;
     IndexDatabaseUpdates indexDBUpdates;
     // undo transactions in reverse order
     for (int transactionIndex = block.vtx.size() - 1; transactionIndex >= 0; transactionIndex--) {
         const CTransaction& tx = block.vtx[transactionIndex];
-        const TransactionLocationReference txLocationReference(tx, pindex->nHeight, transactionIndex);
+        const TransactionLocationReference txLocationReference(utxoHasher, tx, pindex->nHeight, transactionIndex);
         const auto* undo = (transactionIndex > 0 ? &blockUndo.vtxundo[transactionIndex - 1] : nullptr);
         const TxReversalStatus status = UpdateCoinsReversingTransaction(tx, txLocationReference, view, undo);
         if(!CheckTxReversalStatus(status,fClean))

@@ -5,6 +5,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "txdb.h"
+#include "OutputHash.h"
 #include "uint256.h"
 #include <stdint.h>
 #include <coins.h>
@@ -40,7 +41,7 @@ constexpr char DB_NAMEDFLAG = 'F';
 } // anonymous namespace
 
 
-void static BatchWriteCoins(CLevelDBBatch& batch, const uint256& hash, const CCoins& coins)
+void static BatchWriteCoins(CLevelDBBatch& batch, const OutputHash& hash, const CCoins& coins)
 {
     if (coins.IsPruned())
         batch.Erase(std::make_pair(DB_COINS, hash));
@@ -63,12 +64,12 @@ CCoinsViewDB::CCoinsViewDB(
 {
 }
 
-bool CCoinsViewDB::GetCoins(const uint256& txid, CCoins& coins) const
+bool CCoinsViewDB::GetCoins(const OutputHash& txid, CCoins& coins) const
 {
     return db.Read(std::make_pair(DB_COINS, txid), coins);
 }
 
-bool CCoinsViewDB::HaveCoins(const uint256& txid) const
+bool CCoinsViewDB::HaveCoins(const OutputHash& txid) const
 {
     return db.Exists(std::make_pair(DB_COINS, txid));
 }

@@ -71,7 +71,7 @@ void WalletDustCombiner::CombineDust(CAmount combineThreshold)
             if (out.Value() > combineThreshold * COIN)
                 continue;
 
-            COutPoint outpt(out.tx->GetHash(), out.i);
+            COutPoint outpt(wallet_.GetUtxoHash(*out.tx), out.i);
             coinControl->Select(outpt);
             coinsToCombine.push_back(out);
             nTotalRewardsValue += out.Value();
@@ -94,7 +94,7 @@ void WalletDustCombiner::CombineDust(CAmount combineThreshold)
         CWalletTx wtx;
         std::pair<std::string,bool> txCreationResult;
         {
-            CoinControlSelectionAlgorithm coinSelectionAlgorithm(coinControl.get());
+            CoinControlSelectionAlgorithm coinSelectionAlgorithm(coinControl.get(), wallet_);
             txCreationResult = wallet_.SendMoney(vecSend, wtx, &coinSelectionAlgorithm, ALL_SPENDABLE_COINS);
         }
         if (!txCreationResult.second) {

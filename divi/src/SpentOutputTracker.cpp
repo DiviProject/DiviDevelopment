@@ -19,7 +19,7 @@ SpentOutputTracker::SpentOutputTracker(
  * Outpoint is spent if any non-conflicted transaction
  * spends it:
  */
-bool SpentOutputTracker::IsSpent(const uint256& hash, unsigned int n) const
+bool SpentOutputTracker::IsSpent(const OutputHash& hash, unsigned int n) const
 {
     const COutPoint outpoint(hash, n);
     std::pair<TxSpends::const_iterator, TxSpends::const_iterator> range;

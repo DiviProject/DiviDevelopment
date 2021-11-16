@@ -70,7 +70,7 @@ class WalletTest (BitcoinTestFramework):
         for utxo in node0utxos:
             inputs = []
             outputs = {}
-            inputs.append({ "txid" : utxo["txid"], "vout" : utxo["vout"]})
+            inputs.append({ "txid" : utxo["outputhash"], "vout" : utxo["vout"]})
             outputs[self.nodes[2].getnewaddress("from1")] = utxo["amount"]
             raw_tx = self.nodes[0].createrawtransaction(inputs, outputs)
             txns_to_send.append(self.nodes[0].signrawtransaction(raw_tx))

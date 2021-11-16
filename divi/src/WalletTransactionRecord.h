@@ -21,6 +21,7 @@ public:
     WalletTransactionRecord(CCriticalSection& requiredWalletLock,const std::string& walletFilename);
     WalletTransactionRecord(CCriticalSection& requiredWalletLock);
     const CWalletTx* GetWalletTx(const uint256& hash) const;
+    const CWalletTx* GetWalletTx(const OutputHash& hash) const;
 
     /** Tries to look up a transaction in the wallet, either by hash (txid) or
      *  the bare txid that is used after segwit-light to identify outputs.  */

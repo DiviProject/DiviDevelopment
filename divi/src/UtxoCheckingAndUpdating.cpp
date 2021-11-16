@@ -1,5 +1,6 @@
 #include <UtxoCheckingAndUpdating.h>
 
+#include <ForkActivation.h>
 #include <primitives/transaction.h>
 #include <Logging.h>
 #include <coins.h>
@@ -12,12 +13,20 @@
 #include <chainparams.h>
 #include <defaultValues.h>
 
-void UpdateCoinsWithTransaction(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txundo, int nHeight)
+OutputHash BlockUtxoHasher::GetUtxoHash(const CTransaction& tx) const
+{
+    if (as.IsActive(Fork::SegwitLight))
+        return OutputHash(tx.GetBareTxid());
+    return OutputHash(tx.GetHash());
+}
+
+void UpdateCoinsWithTransaction(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txundo,
+                                const TransactionUtxoHasher& hasher, const int nHeight)
 {
     // mark inputs spent
     if (!tx.IsCoinBase() ) {
         txundo.vprevout.reserve(tx.vin.size());
-        BOOST_FOREACH (const CTxIn& txin, tx.vin) {
+        for (const auto& txin : tx.vin) {
             txundo.vprevout.push_back(CTxInUndo());
             bool ret = inputs.ModifyCoins(txin.prevout.hash)->Spend(txin.prevout.n, txundo.vprevout.back());
             assert(ret);
@@ -25,7 +34,7 @@ void UpdateCoinsWithTransaction(const CTransaction& tx, CCoinsViewCache& inputs,
     }
 
     // add outputs
-    inputs.ModifyCoins(tx.GetHash())->FromTx(tx, nHeight);
+    inputs.ModifyCoins(hasher.GetUtxoHash(tx))->FromTx(tx, nHeight);
 }
 
 static bool RemoveTxOutputsFromCache(
@@ -39,7 +48,7 @@ static bool RemoveTxOutputsFromCache(
     // have outputs available even in the block itself, so we handle that case
     // specially with outsEmpty.
     CCoins outsEmpty;
-    CCoinsModifier outs = view.ModifyCoins(txLocationReference.hash);
+    CCoinsModifier outs = view.ModifyCoins(txLocationReference.utxoHash);
     outs->ClearUnspendable();
 
     CCoins outsBlock(tx, txLocationReference.blockHeight);

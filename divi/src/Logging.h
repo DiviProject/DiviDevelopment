@@ -50,6 +50,7 @@ template <typename T>
         } \
     };
 LOG_WITH_CONVERSION(CLockLocation)
+LOG_WITH_CONVERSION(OutputHash)
 LOG_WITH_CONVERSION(uint256)
 
 /* Defined in Logging-common.cpp.  */
