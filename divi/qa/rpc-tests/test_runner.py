@@ -83,6 +83,7 @@ BASE_SCRIPTS = [
     'StakingVaultDeactivation.py',
     'StakingVaultSpam.py',
     'StakingVaultRedundancy.py',
+    'custom_address_update.py',
     'forknotify.py',
     'getchaintips.py',
     'httpbasics.py',

@@ -40,6 +40,7 @@ private:
         const CService& newAddr,
         const CTxIn& newVin,
         const CPubKey& pubKeyCollateralAddress,
+        const CScript& rewardScript,
         const CPubKey& pubKeyMasternode,
         MasternodeTier nMasternodeTier,
         int protocolVersionIn);
@@ -47,6 +48,7 @@ private:
         const CTxIn& txin,
         const CService& service,
         const CPubKey& pubKeyCollateralAddressNew,
+        const CScript& rewardScript,
         const CPubKey& pubKeyMasternodeNew,
         MasternodeTier nMasternodeTier,
         bool deferRelay,

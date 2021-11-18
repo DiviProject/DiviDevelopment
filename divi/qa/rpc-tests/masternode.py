@@ -6,6 +6,7 @@
 
 from test_framework import BitcoinTestFramework
 from util import *
+import copy
 import time
 
 
@@ -45,7 +46,7 @@ class MnSetupData (object):
     if address is not None:
       self.address = address
 
-def setup_masternode(mempoolSync,controlNode, hostNode,alias,tier,hostIP, utxo = None):
+def setup_masternode(mempoolSync,controlNode, hostNode,alias,tier,hostIP, utxo = None, rewardAddr=""):
   """Calls fundmasternode with the given data and returns the
   MnConfigLine instance."""
   txdata = None
@@ -62,7 +63,7 @@ def setup_masternode(mempoolSync,controlNode, hostNode,alias,tier,hostIP, utxo =
   pubkey = controlNode.validateaddress(address)["pubkey"]
   if sync_required:
     mempoolSync()
-  data = hostNode.setupmasternode(alias,txdata["txhash"],str(txdata["vout"]), pubkey, hostIP)
+  data = hostNode.setupmasternode(alias,txdata["txhash"],str(txdata["vout"]), pubkey, hostIP, rewardAddr)
   return MnSetupData (data,address)
 
 class MnTestFramework(BitcoinTestFramework):
@@ -86,12 +87,12 @@ class MnTestFramework(BitcoinTestFramework):
 
     return result
 
-  def setup_masternode(self,controlNodeIndex, hostNodeIndex,alias,tier,utxo=None):
+  def setup_masternode(self,controlNodeIndex, hostNodeIndex,alias,tier,utxo=None, rewardAddr=""):
     def mempoolSync():
       sync_mempools (self.nodes)
     controlNode = self.nodes[controlNodeIndex]
     hostNode = self.nodes[hostNodeIndex]
-    self.setup[hostNodeIndex] = setup_masternode(mempoolSync,controlNode,hostNode,alias, tier,"localhost:%d" % p2p_port (hostNodeIndex),utxo=utxo)
+    self.setup[hostNodeIndex] = setup_masternode(mempoolSync,controlNode,hostNode,alias, tier,"localhost:%d" % p2p_port (hostNodeIndex),utxo=utxo, rewardAddr=rewardAddr)
     self.mn_control_node_indices[alias] = controlNodeIndex
     self.mn_host_node_indices[alias] = hostNodeIndex
 
@@ -171,6 +172,11 @@ class MnTestFramework(BitcoinTestFramework):
         else:
           break
 
+  def args_for(self, n):
+    """Returns the arguments to use for node n.  Defaults to the base args
+    but can be overridden as needed."""
+    return copy.deepcopy(self.base_args)
+
   def stop_masternode_daemons(self):
     def stop_masternode(nodeIndex):
       if self.nodes[nodeIndex] is not None:
@@ -185,7 +191,7 @@ class MnTestFramework(BitcoinTestFramework):
       if self.nodes[nodeIndex] is not None:
         assert_equal("WARNING -- overwriting connection","")
       else:
-        args = self.base_args[:]
+        args = self.args_for(nodeIndex)
         conf = self.setup[nodeIndex].cfg
         args.append ("-masternode=%s" % conf.alias)
         self.nodes[nodeIndex] = start_node (nodeIndex, self.options.tmpdir, extra_args=args, mn_config_lines=[conf.line])
@@ -220,6 +226,7 @@ class MnTestFramework(BitcoinTestFramework):
           assert_equal (local_status["status"], 4)
           assert_equal(local_status["txhash"],listedMN["txhash"])
           assert_equal(local_status["outputidx"],listedMN["outidx"])
+          assert_equal(local_status["rewardscript"],listedMN["rewardscript"])
           node_found = True
       assert_equal(node_found,True)
     self.for_each_masternode(find_mn)

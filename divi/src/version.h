@@ -33,6 +33,9 @@ static constexpr int MEMPOOL_GD_VERSION = 60002;
 //! "filter*" commands are disabled without NODE_BLOOM after and including this version
 static constexpr int NO_BLOOM_VERSION = 70005;
 
+//! include explicit reward script in masternode broadcasts
+static constexpr int MN_REWARD_SCRIPT_VERSION = 71000;
+
 /** The current protocol version.   Since it can be changed through -protocolversion
  *  for testing, it is not a constexpr but a real variable.  */
 extern const int& PROTOCOL_VERSION;

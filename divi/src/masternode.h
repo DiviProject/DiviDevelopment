@@ -12,6 +12,7 @@
 #include <primitives/transaction.h>
 #include <masternode-tier.h>
 #include <MasternodePing.h>
+#include <Logging.h>
 
 #define MASTERNODE_MIN_CONFIRMATIONS 15
 #define MASTERNODE_MIN_MNP_SECONDS (10 * 60)
@@ -50,6 +51,10 @@ public:
     CTxIn vin;
     CService addr;
     CPubKey pubKeyCollateralAddress;
+    /** The script to which masternode rewards should be paid.  This often
+     *  is the collateral address, but (starting at some fork point) masternodes
+     *  can also choose a different script.  */
+    CScript rewardScript;
     CPubKey pubKeyMasternode;
     std::vector<unsigned char> signature;
     int activeState;
@@ -81,6 +86,11 @@ public:
         return !(a.vin == b.vin);
     }
 
+    /** Returns the "default" reward script, which is the one
+     *  matching the collateral address.  */
+    CScript GetDefaultRewardScript() const;
+    static CScript GetDefaultRewardScript(const CPubKey& pubKeyCollateralAddress);
+
     /** Calculates the score of the current masternode, based on the given
      *  scoring hash.  It should be the result of GetBlockHashForScoring of
      *  the target block height.  */
@@ -106,6 +116,7 @@ public:
         READWRITE(vin);
         READWRITE(addr);
         READWRITE(pubKeyCollateralAddress);
+        READWRITE(rewardScript);
         READWRITE(pubKeyMasternode);
         READWRITE(signature);
         READWRITE(sigTime);
@@ -149,6 +160,15 @@ public:
         READWRITE(vin);
         READWRITE(addr);
         READWRITE(pubKeyCollateralAddress);
+        if (nVersion >= MN_REWARD_SCRIPT_VERSION) {
+            READWRITE(rewardScript);
+        } else {
+            if (ser_action.ForRead()) {
+                rewardScript = GetDefaultRewardScript();
+            } else if (rewardScript != GetDefaultRewardScript()) {
+                LogPrintf("WARNING: CMasternodeBroadcast - ignoring changed reward script for serialisation of %s\n", vin.prevout.ToString());
+            }
+        }
         READWRITE(pubKeyMasternode);
         READWRITE(signature);
         READWRITE(sigTime);

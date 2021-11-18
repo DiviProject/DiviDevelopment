@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020 The DIVI developers
+# Copyright (c) 2020-2021 The DIVI developers
 # Distributed under the MIT/X11 software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -28,7 +28,6 @@ class MnVaultsTest (MnTestFramework):
   def __init__ (self):
     super (MnVaultsTest, self).__init__ ()
     self.base_args = ["-debug=masternode", "-debug=mocktime"]
-    self.cfg = None
     self.number_of_nodes=7
 
   def connect_to_anchors(self,nodeID):
@@ -124,10 +123,10 @@ class MnVaultsTest (MnTestFramework):
     assert_equal (signed["complete"], True)
     self.unvaultTx = signed["hex"]
 
-    self.setup_masternode(2,1,"mn","copper",{"txhash":txid,"vout":vout})
-    self.cfg = self.setup[1].cfg
-    # FIXME: Use reward address from node 0.
-    self.cfg.rewardAddr = addr
+    self.rewardAddr = self.nodes[0].getnewaddress ("reward")
+    self.setup_masternode(2, 1, "mn", "copper",
+                          utxo={"txhash":txid,"vout":vout},
+                          rewardAddr=self.rewardAddr)
     self.stop_masternode_daemons()
     self.start_masternode_daemons(updateMockTime=True)
     self.connect_masternodes_to_peers(range(3,7),updateMockTime=True)
@@ -204,16 +203,21 @@ class MnVaultsTest (MnTestFramework):
       self.advance_time (10)
       time.sleep(0.01)
 
+    # Mine some blocks normally to make sure the rewards are mature.
+    self.mine_blocks (20)
+
     # Check that some payments were made.
     winners = self.nodes[3].getmasternodewinners ()
     found = False
     for w in winners:
-      if w["winner"]["address"] == self.cfg.rewardAddr:
+      if w["winner"]["address"] == self.rewardAddr:
         found = True
         break
     assert_equal (found, True)
 
-    # FIXME: Check in wallet when we have a custom reward address.
+    # The payments should have been received at the reward address
+    # and in particular not be lost in the "destroyed" vault.
+    assert_greater_than (self.nodes[0].getbalance ("reward"), 0)
 
   def unvault (self):
     print ("Unvaulting the funds...")

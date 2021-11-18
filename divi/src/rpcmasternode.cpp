@@ -264,9 +264,9 @@ Value signmnbroadcast(const Array& params, bool fHelp)
 
 Value setupmasternode(const Array& params, bool fHelp)
 {
-	if (fHelp || params.size() < 5 || params.size() > 6)
+	if (fHelp || params.size() < 5 || params.size() > 7)
 		throw std::runtime_error(
-			"setupmasternode alias txhash outputIndex collateralPubKey ip_address\n"
+			"setupmasternode alias txhash outputIndex collateralPubKey ip_address (reward_address)\n"
 			"\nStarts escrows funds for some purpose.\n"
 
 			"\nArguments:\n"
@@ -275,6 +275,7 @@ Value setupmasternode(const Array& params, bool fHelp)
             "3. outputIndex         (string, required) Output index transaction. \n"
             "4. collateralPubkey    (string, required) collateral pubkey. \n"
             "5. ip_address          (string, required) Local ip address of this node\n"
+            "6. reward_address      (string, optional) A custom reward address, defaults to the collateral address\n"
 			"\nResult:\n"
 			"\"protocol_version\"			(string) Protocol version used for serialization.\n"
             "\"message_to_sign\"			(string) Hex-encoded msg requiring collateral signature.\n"
@@ -315,6 +316,17 @@ Value setupmasternode(const Array& params, bool fHelp)
     if(!CMasternodeBroadcastFactory::CreateWithoutCollateralKey(*pwalletMain,config,masternodeKey.GetPubKey(),pubkeyCollateralAddress,errorMsg,mnb))
     {
         throw JSONRPCError(RPC_INVALID_PARAMS,errorMsg);
+    }
+
+    /* If we have a custom reward address, override the one from the broadcast.
+       This is fine, as it would only invalidate the broadcast signature and
+       the broadcast created is not yet signed anyway.  */
+    if (params.size() >= 6 && !params[5].get_str().empty())
+    {
+        const CBitcoinAddress addr(params[5].get_str());
+        if (!addr.IsValid())
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid reward address");
+        mnb.rewardScript = GetScriptForDestination(addr.Get());
     }
 
     CDataStream ss(SER_NETWORK,PROTOCOL_VERSION);
@@ -396,12 +408,13 @@ Value listmasternodes(const Array& params, bool fHelp)
     for(auto& masternodeEntry : masternodeList)
     {
         Object obj;
-        obj.reserve(10);
+        obj.reserve(11);
         obj.emplace_back("network", masternodeEntry.network);
         obj.emplace_back("txhash", masternodeEntry.txHash);
         obj.emplace_back("outidx", masternodeEntry.outputIndex);
         obj.emplace_back("status", masternodeEntry.status);
         obj.emplace_back("addr", masternodeEntry.collateralAddress);
+        obj.emplace_back("rewardscript", masternodeEntry.rewardScript);
         obj.emplace_back("version", masternodeEntry.protocolVersion);
         obj.emplace_back("lastseen", masternodeEntry.lastSeenTime);
         obj.emplace_back("activetime", masternodeEntry.activeTime);
@@ -564,6 +577,7 @@ Value getmasternodestatus (const Array& params, bool fHelp)
     mnObj.push_back(Pair("outputidx", (uint64_t)std::stoi(activeMNStatus.outputIndex) ));
     mnObj.push_back(Pair("netaddr", activeMNStatus.netAddress));
     mnObj.push_back(Pair("addr", activeMNStatus.collateralAddress));
+    mnObj.push_back(Pair("rewardscript", activeMNStatus.rewardScript));
     mnObj.push_back(Pair("status", std::stoi(activeMNStatus.statusCode) ));
     mnObj.push_back(Pair("message", activeMNStatus.statusMessage));
     return mnObj;

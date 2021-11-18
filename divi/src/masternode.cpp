@@ -6,13 +6,14 @@
 #include "masternode.h"
 
 #include <sync.h>
-#include <Logging.h>
 #include <boost/lexical_cast.hpp>
 #include <timedata.h>
 #include <script/standard.h>
 #include <chainparams.h>
 #include <streams.h>
 #include <net.h>
+
+#include <sstream>
 
 CAmount CMasternode::GetTierCollateralAmount(const MasternodeTier tier)
 {
@@ -63,6 +64,7 @@ CMasternode::CMasternode(const CMasternode& other)
     vin = other.vin;
     addr = other.addr;
     pubKeyCollateralAddress = other.pubKeyCollateralAddress;
+    rewardScript = other.rewardScript;
     pubKeyMasternode = other.pubKeyMasternode;
     signature = other.signature;
     activeState = other.activeState;
@@ -83,6 +85,7 @@ CMasternode::CMasternode(const CMasternodeBroadcast& mnb)
     vin = mnb.vin;
     addr = mnb.addr;
     pubKeyCollateralAddress = mnb.pubKeyCollateralAddress;
+    rewardScript = mnb.rewardScript;
     pubKeyMasternode = mnb.pubKeyMasternode;
     signature = mnb.signature;
     activeState = MASTERNODE_ENABLED;
@@ -108,6 +111,7 @@ void CMasternode::swap(CMasternode& first, CMasternode& second) // nothrow
     swap(first.vin, second.vin);
     swap(first.addr, second.addr);
     swap(first.pubKeyCollateralAddress, second.pubKeyCollateralAddress);
+    swap(first.rewardScript, second.rewardScript);
     swap(first.pubKeyMasternode, second.pubKeyMasternode);
     swap(first.signature, second.signature);
     swap(first.activeState, second.activeState);
@@ -125,6 +129,16 @@ CMasternode& CMasternode::operator=(CMasternode from)
 {
     swap(*this, from);
     return *this;
+}
+
+CScript CMasternode::GetDefaultRewardScript() const
+{
+    return GetDefaultRewardScript(pubKeyCollateralAddress);
+}
+
+CScript CMasternode::GetDefaultRewardScript(const CPubKey& pubKeyCollateralAddress)
+{
+    return GetScriptForDestination(pubKeyCollateralAddress.GetID());
 }
 
 bool CMasternode::IsEnabled() const
@@ -146,8 +160,7 @@ std::string CMasternode::Status() const
 
 CScript CMasternode::GetPaymentScript() const
 {
-    const CTxDestination dest(pubKeyCollateralAddress.GetID());
-    return GetScriptForDestination(dest);
+    return rewardScript;
 }
 
 static uint256 CalculateScoreHelper(CHashWriter hashWritter, int round)
@@ -246,10 +259,28 @@ void CMasternodeBroadcast::Relay() const
 
 std::string CMasternodeBroadcast::getMessageToSign() const
 {
-    std::string vchPubKey(pubKeyCollateralAddress.begin(), pubKeyCollateralAddress.end());
-    std::string vchPubKey2(pubKeyMasternode.begin(), pubKeyMasternode.end());
+    std::ostringstream message;
 
-    return addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey + vchPubKey2 + boost::lexical_cast<std::string>(protocolVersion);
+    message << addr.ToString();
+    message << sigTime;
+    message << std::string(pubKeyCollateralAddress.begin(), pubKeyCollateralAddress.end());
+
+    /* The signature must commit also to the reward script.  We do this by
+       including it in the signed message if and only if it does not match
+       the collateral address.  This makes sure that the signature format
+       is backwards compatible for situations where we just have the
+       default reward script.  */
+    if (rewardScript != GetDefaultRewardScript()) {
+        /* Include a "marker", so that e.g. a zero-length script is different
+           from the default situation.  */
+        message << "rs";
+        message << std::string(rewardScript.begin(), rewardScript.end());
+    }
+
+    message << std::string(pubKeyMasternode.begin(), pubKeyMasternode.end());
+    message << protocolVersion;
+
+    return message.str();
 }
 
 uint256 CMasternodeBroadcast::GetHash() const

@@ -7,6 +7,7 @@
 #include <obfuscation.h>
 #include <chain.h>
 #include <base58address.h>
+#include <script/standard.h>
 #include <TransactionDiskAccessor.h>
 #include <timedata.h>
 #include <WalletTx.h>
@@ -64,6 +65,8 @@ bool createArgumentsFromConfig(
     bool collateralPrivKeyIsRemote,
     CTxIn& txin,
     std::pair<CKey,CPubKey>& masternodeKeyPair,
+    const CPubKey& pubkeyCollateralAddress,
+    CScript& rewardScript,
     MasternodeTier& nMasternodeTier)
 {
     const std::string strService = configEntry.getIp();
@@ -90,6 +93,12 @@ bool createArgumentsFromConfig(
     {
         return false;
     }
+
+    /* If a custom reward address should be used, this is overridden by
+       setupmasternode directly after creating the entry (not loaded through
+       the config file).  */
+    rewardScript = CMasternode::GetDefaultRewardScript(pubkeyCollateralAddress);
+
     return true;
 }
 
@@ -107,6 +116,7 @@ bool CMasternodeBroadcastFactory::CreateWithoutCollateralKey(
     const bool collateralPrivateKeyIsRemote = true;
     const bool deferRelay = true;
     CTxIn txin;
+    CScript rewardScript;
     std::pair<CKey,CPubKey> masternodeKeyPair;
     MasternodeTier nMasternodeTier;
 
@@ -120,6 +130,8 @@ bool CMasternodeBroadcastFactory::CreateWithoutCollateralKey(
         collateralPrivateKeyIsRemote,
         txin,
         masternodeKeyPair,
+        pubkeyCollateralAddress,
+        rewardScript,
         nMasternodeTier))
     {
         return false;
@@ -129,6 +141,7 @@ bool CMasternodeBroadcastFactory::CreateWithoutCollateralKey(
         txin,
         CService(configEntry.getIp()),
         pubkeyCollateralAddress,
+        rewardScript,
         pubkeyMasternode,
         nMasternodeTier,
         deferRelay,
@@ -174,13 +187,14 @@ bool CMasternodeBroadcastFactory::signBroadcast(
 
 CMasternodeBroadcast CMasternodeBroadcastFactory::constructBroadcast(
     const CService& newAddr, const CTxIn& newVin,
-    const CPubKey& pubKeyCollateralAddressNew, const CPubKey& pubKeyMasternodeNew,
+    const CPubKey& pubKeyCollateralAddressNew, const CScript& rewardScript, const CPubKey& pubKeyMasternodeNew,
     const MasternodeTier nMasternodeTier, const int protocolVersionIn)
 {
     CMasternode mn;
     mn.vin = newVin;
     mn.addr = newAddr;
     mn.pubKeyCollateralAddress = pubKeyCollateralAddressNew;
+    mn.rewardScript = rewardScript;
     mn.pubKeyMasternode = pubKeyMasternodeNew;
     mn.protocolVersion = protocolVersionIn;
     mn.nTier = nMasternodeTier;
@@ -191,6 +205,7 @@ void CMasternodeBroadcastFactory::createWithoutSignatures(
     const CTxIn& txin,
     const CService& service,
     const CPubKey& pubKeyCollateralAddressNew,
+    const CScript& rewardScript,
     const CPubKey& pubKeyMasternodeNew,
     const MasternodeTier nMasternodeTier,
     bool deferRelay,
@@ -200,7 +215,7 @@ void CMasternodeBroadcastFactory::createWithoutSignatures(
              CBitcoinAddress(pubKeyCollateralAddressNew.GetID()).ToString(),
              pubKeyMasternodeNew.GetID().ToString());
 
-    mnbRet = CMasternodeBroadcastFactory::constructBroadcast(service, txin, pubKeyCollateralAddressNew, pubKeyMasternodeNew, nMasternodeTier, PROTOCOL_VERSION);
+    mnbRet = CMasternodeBroadcastFactory::constructBroadcast(service, txin, pubKeyCollateralAddressNew, rewardScript, pubKeyMasternodeNew, nMasternodeTier, PROTOCOL_VERSION);
     const CMasternodePing mnp = (deferRelay
                                     ? createDelayedMasternodePing(mnbRet)
                                     : createCurrentPing(txin));

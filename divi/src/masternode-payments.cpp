@@ -16,6 +16,7 @@
 #include "sync.h"
 #include "Logging.h"
 #include "utilmoneystr.h"
+#include "utilstrencodings.h"
 #include "netfulfilledman.h"
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
@@ -454,7 +455,7 @@ void ComputeMasternodesAndScores(
         // proper testing with a very small number of masternodes (which would
         // be scheduled and skipped all the time).
         if (Params().NetworkID() != CBaseChainParams::REGTEST) {
-            if (masternodePayments.IsScheduled(GetScriptForDestination(mn.pubKeyCollateralAddress.GetID()), nBlockHeight)) continue;
+            if (masternodePayments.IsScheduled(mn.GetPaymentScript(), nBlockHeight)) continue;
         }
 
         //it's too new, wait for a cycle
@@ -528,7 +529,7 @@ MnPaymentQueueData CMasternodePayments::GetMasternodePaymentQueue(const uint256&
     {
         if(pmn != nullptr && queueData.topTwentyMNPayees.size() < 2 * MNPAYMENTS_SIGNATURES_TOTAL)
         {
-            queueData.topTwentyMNPayees.push_back(GetScriptForDestination(pmn->pubKeyCollateralAddress.GetID()));
+            queueData.topTwentyMNPayees.push_back(pmn->GetPaymentScript());
         }
         else
         {

@@ -2,7 +2,7 @@
 
 #include <Logging.h>
 
-static int version = MIN_PEER_PROTO_VERSION_AFTER_ENFORCEMENT;
+static int version = MN_REWARD_SCRIPT_VERSION;
 const int& PROTOCOL_VERSION(version);
 
 void SetProtocolVersion(const int newVersion)

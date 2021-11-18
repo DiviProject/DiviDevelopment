@@ -183,6 +183,7 @@ bool CMasternodeMan::UpdateWithNewBroadcast(const CMasternodeBroadcast &mnb, CMa
     if (mnb.sigTime > masternode.sigTime) {
         masternode.pubKeyMasternode = mnb.pubKeyMasternode;
         masternode.pubKeyCollateralAddress = mnb.pubKeyCollateralAddress;
+        masternode.rewardScript = mnb.rewardScript;
         masternode.sigTime = mnb.sigTime;
         masternode.signature = mnb.signature;
         masternode.protocolVersion = mnb.protocolVersion;
@@ -230,6 +231,12 @@ bool CMasternodeMan::CheckInputsForMasternode(const CMasternodeBroadcast& mnb, i
 
 bool CMasternodeMan::CheckMasternodeBroadcastContext(CMasternodeBroadcast& mnb, int& nDoS)
 {
+    /* Until the protocol is updated, do not allow custom reward scripts.  */
+    if (ActiveProtocol() < MN_REWARD_SCRIPT_VERSION && mnb.rewardScript != mnb.GetDefaultRewardScript()) {
+        LogPrintf("%s : mnb - reward script does not match collateral address for %s\n", __func__, mnb.vin.prevout.ToString());
+        return false;
+    }
+
     // make sure signature isn't in the future (past is OK)
     if (mnb.sigTime > GetAdjustedTime() + 60 * 60) {
         LogPrintf("%s : mnb - Signature rejected, too far into the future %s\n", __func__, mnb.vin.prevout.hash);

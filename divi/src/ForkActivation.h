@@ -24,6 +24,13 @@ enum Fork
   UniformLotteryWinners,
   CheckLockTimeVerify,
   DeprecateMasternodes,
+
+  /**
+   * Custom reward addresses for masternodes.  This is activated like other
+   * forks based on block time; but it only affects the network protocol
+   * we require from peers, not the actual consensus logic.
+   */
+  CustomRewardAddresses,
 };
 
 /**
