@@ -35,8 +35,8 @@ public:
     mtx.nVersion = 1;
     mtx.nLockTime = 1234567890;
 
-    mtx.vin.emplace_back (HashStr ("in 1"), 4, CScript () << OP_TRUE << OP_FALSE);
-    mtx.vin.emplace_back (HashStr ("in 2"), 2, CScript () << OP_DUP);
+    mtx.vin.emplace_back (OutputHash (HashStr ("in 1")), 4, CScript () << OP_TRUE << OP_FALSE);
+    mtx.vin.emplace_back (OutputHash (HashStr ("in 2")), 2, CScript () << OP_DUP);
 
     mtx.vout.emplace_back (1 * COIN, CScript () << OP_TRUE);
     mtx.vout.emplace_back (0, CScript () << OP_META << HashToVec ("data"));

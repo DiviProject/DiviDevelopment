@@ -51,7 +51,7 @@ class TxnMallTest(BitcoinTestFramework):
         utxos_by_account = self.collect_utxos_by_account(sender,["foo","bar"])
         inputs = []
         for utxo in utxos_by_account["foo"]:
-            inputs.append({ "txid" : utxo["txid"], "vout" : utxo["vout"]} )
+            inputs.append({ "txid" : utxo["outputhash"], "vout" : utxo["vout"]} )
 
         outputs = {}
         outputs[self.foo_address] = 9.999
@@ -65,9 +65,9 @@ class TxnMallTest(BitcoinTestFramework):
         utxos_by_account = self.collect_utxos_by_account(sender,["foo","bar"])
         inputs = []
         for utxo in utxos_by_account["foo"]:
-            inputs.append({ "txid" : utxo["txid"], "vout" : utxo["vout"], "address" : utxo["address"] } )
+            inputs.append({ "txid" : utxo["outputhash"], "vout" : utxo["vout"], "address" : utxo["address"] } )
         for utxo in utxos_by_account["bar"]:
-            inputs.append({ "txid" : utxo["txid"], "vout" : utxo["vout"], "address" : utxo["address"] } )
+            inputs.append({ "txid" : utxo["outputhash"], "vout" : utxo["vout"], "address" : utxo["address"] } )
 
         outputs = {}
         outputs[self.bar_address] = 29.999

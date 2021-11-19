@@ -49,7 +49,7 @@ class BadBlockTests (BitcoinTestFramework):
         amountToSend = int ((Decimal (inp["amount"]) - Decimal ('0.1')) * COIN)
         tx = CTransaction ()
         tx.vout.append( CTxOut(amountToSend, scriptToSendTo )  )
-        tx.vin.append (CTxIn (COutPoint (txid=inp["txid"], n=inp["vout"])))
+        tx.vin.append (CTxIn (COutPoint (txid=inp["outputhash"], n=inp["vout"])))
 
 
         unsigned = tx.serialize ().hex ()

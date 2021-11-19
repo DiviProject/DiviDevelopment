@@ -12,6 +12,17 @@ from authproxy import AuthServiceProxy, JSONRPCException
 from util import *
 
 
+def find_output(node, txid, amount):
+    """
+    Return index to output of txid with value amount
+    Raises exception if there is none.
+    """
+    txdata = node.getrawtransaction(txid, 1)
+    for i in range(len(txdata["vout"])):
+        if txdata["vout"][i]["value"] == amount:
+            return {"txid": txdata["txid"], "vout": i}
+    raise RuntimeError("find_output txid %s : %s not found"%(txid,str(amount)))
+
 def send_zeropri_transaction(from_node, to_node, amount, fee):
     """
     Create&broadcast a zero-priority transaction.
@@ -31,10 +42,9 @@ def send_zeropri_transaction(from_node, to_node, amount, fee):
     self_signresult = from_node.signrawtransaction(self_rawtx)
     self_txid = from_node.sendrawtransaction(self_signresult["hex"], True)
 
-    vout = find_output(from_node, self_txid, amount+fee)
     # Now immediately spend the output to create a 1-input, 1-output
     # zero-priority transaction:
-    inputs = [ { "txid" : self_txid, "vout" : vout } ]
+    inputs = [find_output(from_node, self_txid, amount + fee)]
     outputs = { to_node.getnewaddress() : float(amount) }
 
     rawtx = from_node.createrawtransaction(inputs, outputs)

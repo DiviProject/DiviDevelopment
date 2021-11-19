@@ -104,7 +104,7 @@ Value allocatefunds(const Array& params, bool fHelp)
     SendMoneyToAddress(acctAddr.Get(), CMasternode::GetTierCollateralAmount(nMasternodeTier), wtx);
 
     Object obj;
-    obj.push_back(Pair("txhash", wtx.GetHash().GetHex()));
+    obj.push_back(Pair("txhash", pwalletMain->GetUtxoHash(wtx).GetHex()));
     bool found = false;
     auto nAmount = CMasternode::GetTierCollateralAmount(nMasternodeTier);
     for(size_t i = 0; i < wtx.vout.size(); ++i)

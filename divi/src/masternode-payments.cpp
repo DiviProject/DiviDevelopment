@@ -56,7 +56,7 @@ namespace
 struct RankingCacheEntry
 {
 
-  using value_type = std::array<uint256, MAX_RANKING_CHECK_NUM>;
+  using value_type = std::array<OutputHash, MAX_RANKING_CHECK_NUM>;
 
   /** The scoring hash this is for, i.e. the key.  */
   uint256 scoringBlockHash;
@@ -582,7 +582,7 @@ unsigned CMasternodePayments::GetMasternodeRank(const CTxIn& vin, const uint256&
 
     cacheEntry = rankingCache->Find(scoringBlockHash);
     if (cacheEntry == nullptr) {
-        std::vector<std::pair<int64_t, uint256>> rankedNodes;
+        std::vector<std::pair<int64_t, OutputHash>> rankedNodes;
         {
             LOCK(networkMessageManager_.cs);
             masternodeManager_.Check();
@@ -596,7 +596,7 @@ unsigned CMasternodePayments::GetMasternodeRank(const CTxIn& vin, const uint256&
         }
 
         std::sort(rankedNodes.begin(), rankedNodes.end(),
-            [] (const std::pair<int64_t, uint256>& a, const std::pair<int64_t, uint256>& b)
+            [] (const std::pair<int64_t, OutputHash>& a, const std::pair<int64_t, OutputHash>& b)
             {
                 return a.first > b.first;
             });

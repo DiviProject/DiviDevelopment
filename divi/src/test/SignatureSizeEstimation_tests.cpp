@@ -26,7 +26,7 @@ public:
     CMutableTransaction getSampleTransaction()
     {
         CMutableTransaction sampleTransaction;
-        sampleTransaction.vin.emplace_back(uint256S("0x8b4bdd6fd8220ca956938d214cbd4635bfaacc663f53ad8bda5e434b9dc647fe"),1);
+        sampleTransaction.vin.emplace_back(OutputHash(uint256S("0x8b4bdd6fd8220ca956938d214cbd4635bfaacc663f53ad8bda5e434b9dc647fe")), 1);
         return sampleTransaction;
     }
     void createKeys(unsigned numberOfKeys, bool compressedKey = true)

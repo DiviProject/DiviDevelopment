@@ -17,14 +17,14 @@ struct COrphanTx {
     NodeId fromPeer;
 };
 std::map<uint256, COrphanTx> mapOrphanTransactions;
-std::map<uint256, std::set<uint256> > mapOrphanTransactionsByPrev;
+std::map<OutputHash, std::set<uint256> > mapOrphanTransactionsByPrev;
 
 
 //////////////////////////////////////////////////////////////////////////////
 //
 // mapOrphanTransactions
 //
-const std::set<uint256>& GetOrphanSpendingTransactionIds(const uint256& txHash)
+const std::set<uint256>& GetOrphanSpendingTransactionIds(const OutputHash& txHash)
 {
     static std::set<uint256> emptySet;
     const auto it = mapOrphanTransactionsByPrev.find(txHash);

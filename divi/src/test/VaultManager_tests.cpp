@@ -7,6 +7,7 @@
 #include <FakeBlockIndexChain.h>
 #include <primitives/block.h>
 #include <chain.h>
+#include <MockUtxoHasher.h>
 #include <MockVaultManagerDatabase.h>
 #include <WalletTx.h>
 #include <streams.h>
@@ -21,6 +22,7 @@ using ::testing::Invoke;
 struct VaultManagerTestFixture
 {
 public:
+    MockUtxoHasher utxoHasher;
     std::unique_ptr<NiceMock<MockVaultManagerDatabase>> mockPtr;
     std::unique_ptr<FakeBlockIndexWithHashes> fakeBlockIndexWithHashesResource;
     std::unique_ptr<I_MerkleTxConfirmationNumberCalculator> confirmationsCalculator;
@@ -36,7 +38,7 @@ public:
                 *(fakeBlockIndexWithHashesResource->blockIndexByHash)
             ))
         , scriptGenerator()
-        , manager( new VaultManager(*confirmationsCalculator,*mockPtr ))
+        , manager( new VaultManager(*confirmationsCalculator, utxoHasher, *mockPtr))
     {
     }
     ~VaultManagerTestFixture()
@@ -190,7 +192,7 @@ BOOST_AUTO_TEST_CASE(willDiscountSpentUTXOs)
     manager->addTransaction(tx,&blockMiningFirstTx, true);
 
     CMutableTransaction otherTx;
-    otherTx.vin.emplace_back( COutPoint(tx.GetHash(), 1u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(utxoHasher.GetUtxoHash(tx)), 1u) );
     otherTx.vout.push_back(CTxOut(100,managedScript));
     otherTx.vout.push_back(CTxOut(100,managedScript));
     otherTx.vout.push_back(CTxOut(100,managedScript));
@@ -245,7 +247,7 @@ BOOST_AUTO_TEST_CASE(willCheckThatCoinstakeTransactionsAreDeepEnoughToSpend)
     manager->addTransaction(fundingTransaction,&blockMiningFundingTx, true);
 
     CMutableTransaction tx;
-    tx.vin.push_back(CTxIn(fundingTransaction.GetHash(),0u));
+    tx.vin.push_back(CTxIn(utxoHasher.GetUtxoHash(fundingTransaction),0u));
     CTxOut emptyFirstOutput;
     emptyFirstOutput.SetEmpty();
     tx.vout.push_back(emptyFirstOutput);
@@ -271,7 +273,7 @@ BOOST_AUTO_TEST_CASE(willLoadTransactionsFromDatabase)
     dummyTransaction.vout.push_back(CTxOut(100,scriptGenerator(10)));
 
     CMutableTransaction tx;
-    tx.vin.push_back(CTxIn(dummyTransaction.GetHash(),0u));
+    tx.vin.push_back(CTxIn(utxoHasher.GetUtxoHash(dummyTransaction),0u));
     tx.vout.push_back(CTxOut(100,managedScript));
     tx.vout.push_back(CTxOut(100,managedScript));
     tx.vout.push_back(CTxOut(100,managedScript));
@@ -309,7 +311,7 @@ BOOST_AUTO_TEST_CASE(willLoadTransactionsFromDatabase)
             return true;
         }
     ));
-    manager.reset(new VaultManager(*confirmationsCalculator, *mockPtr ));
+    manager.reset(new VaultManager(*confirmationsCalculator, utxoHasher, *mockPtr ));
 
     BOOST_CHECK_EQUAL(manager->getManagedUTXOs().size(), 4u);
     BOOST_CHECK(expectedTx==manager->getTransaction(tx.GetHash()));
@@ -329,7 +331,7 @@ BOOST_AUTO_TEST_CASE(willLoadManyTransactionsFromDatabase)
         CMutableTransaction dummyTransaction;
         dummyTransaction.vout.push_back(CTxOut(100,scriptGenerator(10)));
         CMutableTransaction tx;
-        tx.vin.push_back(CTxIn(dummyTransaction.GetHash(),0u));
+        tx.vin.push_back(CTxIn(utxoHasher.GetUtxoHash(dummyTransaction),0u));
         tx.vout.push_back(CTxOut(randomSentAmount,scriptGenerator(10)));
 
         dummyTransactions.emplace_back(tx);
@@ -352,7 +354,7 @@ BOOST_AUTO_TEST_CASE(willLoadManyTransactionsFromDatabase)
             return false;
         }
     ));
-    manager.reset(new VaultManager(*confirmationsCalculator, *mockPtr ));
+    manager.reset(new VaultManager(*confirmationsCalculator, utxoHasher, *mockPtr ));
 
     for(unsigned txCount =0 ; txCount < 10u; ++txCount)
     {
@@ -375,7 +377,7 @@ BOOST_AUTO_TEST_CASE(willHaveUTXOCountDiminishIfThirdPartySpendsScript)
 
     CScript otherScript = scriptGenerator(10);
     CMutableTransaction otherTx;
-    otherTx.vin.emplace_back( COutPoint(tx.GetHash(), 1u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(tx.GetHash()), 1u) );
     otherTx.vout.push_back(CTxOut(100,otherScript));
     otherTx.vout.push_back(CTxOut(100,otherScript));
     otherTx.vout.push_back(CTxOut(100,otherScript));
@@ -401,8 +403,8 @@ BOOST_AUTO_TEST_CASE(willNotRecoverDepositUTXOsAfterReorg)
 
     CScript otherScript = scriptGenerator(10);
     CMutableTransaction otherTx;
-    otherTx.vin.emplace_back( COutPoint(tx.GetHash(), 0u) );
-    otherTx.vin.emplace_back( COutPoint(tx.GetHash(), 1u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(tx.GetHash()), 0u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(tx.GetHash()), 1u) );
     otherTx.vout.push_back(CTxOut(100,managedScript));
     otherTx.vout.push_back(CTxOut(100,managedScript));
     otherTx.vout.push_back(CTxOut(100,managedScript));
@@ -437,8 +439,8 @@ BOOST_AUTO_TEST_CASE(willRecoverPreviouslyStakedUTXOsAfterReorg)
 
     CScript otherScript = scriptGenerator(10);
     CMutableTransaction otherTx;
-    otherTx.vin.emplace_back( COutPoint(tx.GetHash(), 0u) );
-    otherTx.vin.emplace_back( COutPoint(tx.GetHash(), 1u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(tx.GetHash()), 0u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(tx.GetHash()), 1u) );
     otherTx.vout.emplace_back();
     otherTx.vout.back().SetEmpty();
     otherTx.vout.push_back(CTxOut(100,managedScript));
@@ -497,7 +499,7 @@ BOOST_AUTO_TEST_CASE(willRecordInTheWalletTxWetherTransactionWasADeposit)
 
     CScript otherScript = scriptGenerator(10);
     CMutableTransaction otherTx;
-    otherTx.vin.emplace_back( COutPoint(tx.GetHash(), 1u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(tx.GetHash()), 1u) );
     otherTx.vout.push_back(CTxOut(100,otherScript));
     otherTx.vout.push_back(CTxOut(100,otherScript));
     otherTx.vout.push_back(CTxOut(100,otherScript));
@@ -527,8 +529,8 @@ BOOST_AUTO_TEST_CASE(willStopRecognizingUTXOsAsManagedWhenNotAllInputsAreKnown)
     BOOST_CHECK_EQUAL(manager->getManagedUTXOs().size(),1u);
 
     CMutableTransaction otherTx;
-    otherTx.vin.emplace_back( COutPoint(tx.GetHash(), 0u) );
-    otherTx.vin.emplace_back( COutPoint(dummyTransaction.GetHash(), 0u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(tx.GetHash()), 0u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(dummyTransaction.GetHash()), 0u) );
     otherTx.vout.push_back(CTxOut(50,managedScript));
     CBlock blockMiningSecondTx = getBlockToMineTransaction(otherTx);
     manager->addTransaction(otherTx,&blockMiningSecondTx, false);
@@ -554,8 +556,8 @@ BOOST_AUTO_TEST_CASE(willStopRecognizingUTXOsAsManagedWhenNotAllInputsAreManaged
     BOOST_CHECK_EQUAL(manager->getManagedUTXOs().size(),1u);
 
     CMutableTransaction otherTx;
-    otherTx.vin.emplace_back( COutPoint(tx.GetHash(), 0u) );
-    otherTx.vin.emplace_back( COutPoint(dummyTransaction.GetHash(), 0u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(tx.GetHash()), 0u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(dummyTransaction.GetHash()), 0u) );
     otherTx.vout.push_back(CTxOut(50,managedScript));
     CBlock blockMiningSecondTx = getBlockToMineTransaction(otherTx);
     manager->addTransaction(otherTx,&blockMiningSecondTx, false);
@@ -585,8 +587,8 @@ BOOST_AUTO_TEST_CASE(willIgnoreManagedUTXOsIfNotSpentByCoinstakeNorDeposited)
     BOOST_CHECK_EQUAL(manager->getManagedUTXOs().size(),4u);
 
     CMutableTransaction spendingTx;
-    spendingTx.vin.emplace_back( COutPoint(tx.GetHash(), 0u) );
-    spendingTx.vin.emplace_back( COutPoint(otherTx.GetHash(), 0u) );
+    spendingTx.vin.emplace_back( COutPoint(OutputHash(tx.GetHash()), 0u) );
+    spendingTx.vin.emplace_back( COutPoint(OutputHash(otherTx.GetHash()), 0u) );
     spendingTx.vout.push_back(CTxOut(50,managedScript));
     spendingTx.vout.push_back(CTxOut(50,managedScript));
     spendingTx.vout.push_back(CTxOut(50,managedScript));
@@ -597,8 +599,8 @@ BOOST_AUTO_TEST_CASE(willIgnoreManagedUTXOsIfNotSpentByCoinstakeNorDeposited)
     BOOST_CHECK_EQUAL(manager->getManagedUTXOs().size(),2u);
 
     CMutableTransaction secondSpendingTx;
-    secondSpendingTx.vin.emplace_back( COutPoint(tx.GetHash(), 1u) );
-    secondSpendingTx.vin.emplace_back( COutPoint(otherTx.GetHash(), 1u) );
+    secondSpendingTx.vin.emplace_back( COutPoint(OutputHash(tx.GetHash()), 1u) );
+    secondSpendingTx.vin.emplace_back( COutPoint(OutputHash(otherTx.GetHash()), 1u) );
     secondSpendingTx.vout.emplace_back();
     secondSpendingTx.vout.back().SetEmpty();
     secondSpendingTx.vout.push_back(CTxOut(50,managedScript));
@@ -629,7 +631,7 @@ BOOST_AUTO_TEST_CASE(willAcceptDepositBasedUTXOsEvenIfInputsArentKnown)
     CBlock blockMiningDummyTx = getBlockToMineTransaction(dummyTransaction);
 
     CMutableTransaction tx;
-    tx.vin.emplace_back( COutPoint(dummyTransaction.GetHash(), 0u) );
+    tx.vin.emplace_back( COutPoint(OutputHash(dummyTransaction.GetHash()), 0u) );
     tx.vout.push_back(CTxOut(100,managedScript));
     CBlock blockMiningFirstTx = getBlockToMineTransaction(tx);
     manager->addTransaction(tx,&blockMiningFirstTx, true);
@@ -647,7 +649,7 @@ BOOST_AUTO_TEST_CASE(willAllowUpdatingUTXOsToDepositStatus)
     CBlock blockMiningDummyTx = getBlockToMineTransaction(dummyTransaction);
 
     CMutableTransaction tx;
-    tx.vin.emplace_back( COutPoint(dummyTransaction.GetHash(), 0u) );
+    tx.vin.emplace_back( COutPoint(OutputHash(dummyTransaction.GetHash()), 0u) );
     tx.vout.push_back(CTxOut(100,managedScript));
     CBlock blockMiningFirstTx = getBlockToMineTransaction(tx);
     manager->addTransaction(tx,&blockMiningFirstTx, false);
@@ -690,7 +692,7 @@ BOOST_AUTO_TEST_CASE(willUpdatingDepositStatusWillPersist)
     CBlock blockMiningDummyTx = getBlockToMineTransaction(dummyTransaction);
 
     CMutableTransaction tx;
-    tx.vin.emplace_back( COutPoint(dummyTransaction.GetHash(), 0u) );
+    tx.vin.emplace_back( COutPoint(OutputHash(dummyTransaction.GetHash()), 0u) );
     tx.vout.push_back(CTxOut(100,managedScript));
     CBlock blockMiningFirstTx = getBlockToMineTransaction(tx);
     manager->addTransaction(tx,&blockMiningFirstTx, false);
@@ -698,7 +700,7 @@ BOOST_AUTO_TEST_CASE(willUpdatingDepositStatusWillPersist)
     manager->addTransaction(tx,&blockMiningFirstTx, true);
     BOOST_CHECK_EQUAL(manager->getTransaction(tx.GetHash()).mapValue.count("isVaultDeposit"),1u);
 
-    manager.reset( new VaultManager(*confirmationsCalculator,*mockPtr ));
+    manager.reset( new VaultManager(*confirmationsCalculator, utxoHasher, *mockPtr));
     BOOST_CHECK_EQUAL(manager->getTransaction(tx.GetHash()).mapValue.count("isVaultDeposit"),1u);
 }
 
@@ -713,7 +715,7 @@ BOOST_AUTO_TEST_CASE(willRecordTransactionsSpendingDeposits)
     manager->addTransaction(fundingTransaction,&blockMiningFundingTx, true);
 
     CMutableTransaction tx;
-    tx.vin.emplace_back( COutPoint(fundingTransaction.GetHash(), 0u) );
+    tx.vin.emplace_back( COutPoint(OutputHash(fundingTransaction.GetHash()), 0u) );
     tx.vout.push_back(CTxOut(100,managedScript));
     CBlock blockMiningFirstTx = getBlockToMineTransaction(tx);
     manager->addTransaction(tx,&blockMiningFirstTx, false);
@@ -734,7 +736,7 @@ BOOST_AUTO_TEST_CASE(willNotRecordADepositTransactionThatIsntExplicitlyAdded)
     CBlock blockMiningDummyTx = getBlockToMineTransaction(fundingTransaction);
 
     CMutableTransaction tx;
-    tx.vin.emplace_back( COutPoint(fundingTransaction.GetHash(), 0u) );
+    tx.vin.emplace_back( COutPoint(OutputHash(fundingTransaction.GetHash()), 0u) );
     tx.vout.push_back(CTxOut(100,managedScript));
     CBlock blockMiningFirstTx = getBlockToMineTransaction(tx);
     manager->addTransaction(tx,&blockMiningFirstTx, false);
@@ -754,7 +756,7 @@ BOOST_AUTO_TEST_CASE(willIgnoreCoinstakeTransactionWithSingleUnamangedInput)
     CBlock blockMiningDummyTx = getBlockToMineTransaction(dummyTransaction);
 
     CMutableTransaction otherTx;
-    otherTx.vin.emplace_back( COutPoint(dummyTransaction.GetHash(), 0u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(dummyTransaction.GetHash()), 0u) );
     otherTx.vout.emplace_back();
     otherTx.vout.back().SetEmpty();
     otherTx.vout.push_back(CTxOut(100,managedScript));
@@ -787,9 +789,9 @@ BOOST_AUTO_TEST_CASE(willIgnoreOutputsInCoinstakeWithAtLeastOneUnamangedInput)
     manager->addTransaction(fundingTransaction,&blockMiningFundingTx, true);
 
     CMutableTransaction otherTx;
-    otherTx.vin.emplace_back( COutPoint(fundingTransaction.GetHash(), 0u) );
-    otherTx.vin.emplace_back( COutPoint(dummyTransaction.GetHash(), 0u) );
-    otherTx.vin.emplace_back( COutPoint(fundingTransaction.GetHash(), 1u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(fundingTransaction.GetHash()), 0u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(dummyTransaction.GetHash()), 0u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(fundingTransaction.GetHash()), 1u) );
     otherTx.vout.emplace_back();
     otherTx.vout.back().SetEmpty();
     otherTx.vout.push_back(CTxOut(100,managedScript));
@@ -812,8 +814,8 @@ BOOST_AUTO_TEST_CASE(willIgnoreOutputsFromCoinstakeInLotteryBlockByDefault)
     manager->addTransaction(fundingTransaction,&blockMiningFundingTx, true);
 
     CMutableTransaction otherTx;
-    otherTx.vin.emplace_back( COutPoint(fundingTransaction.GetHash(), 0u) );
-    otherTx.vin.emplace_back( COutPoint(fundingTransaction.GetHash(), 1u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(fundingTransaction.GetHash()), 0u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(fundingTransaction.GetHash()), 1u) );
     otherTx.vout.emplace_back();
     otherTx.vout.back().SetEmpty();
     otherTx.vout.push_back(CTxOut(100,managedScript));
@@ -837,8 +839,8 @@ BOOST_AUTO_TEST_CASE(willRecordCoinstakeTransactionWithOnlyMangedInputs)
     manager->addTransaction(fundingTransaction,&blockMiningFundingTx, true);
 
     CMutableTransaction otherTx;
-    otherTx.vin.emplace_back( COutPoint(fundingTransaction.GetHash(), 0u) );
-    otherTx.vin.emplace_back( COutPoint(fundingTransaction.GetHash(), 1u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(fundingTransaction.GetHash()), 0u) );
+    otherTx.vin.emplace_back( COutPoint(OutputHash(fundingTransaction.GetHash()), 1u) );
     otherTx.vout.emplace_back();
     otherTx.vout.back().SetEmpty();
     otherTx.vout.push_back(CTxOut(100,managedScript));
@@ -862,7 +864,7 @@ BOOST_AUTO_TEST_CASE(willNotAddNonDepositUnconfirmedTransactions)
     CBlock blockMiningDummyTx = getBlockToMineTransaction(dummyTransaction);
 
     CMutableTransaction tx;
-    tx.vin.emplace_back( COutPoint(dummyTransaction.GetHash(), 0u) );
+    tx.vin.emplace_back( COutPoint(OutputHash(dummyTransaction.GetHash()), 0u) );
     tx.vout.push_back(CTxOut(100,managedScript));
     manager->addTransaction(tx,nullptr, false);
 
@@ -882,7 +884,7 @@ BOOST_AUTO_TEST_CASE(willNotAddDepositUnconfirmedTransactions)
     CBlock blockMiningDummyTx = getBlockToMineTransaction(dummyTransaction);
 
     CMutableTransaction tx;
-    tx.vin.emplace_back( COutPoint(dummyTransaction.GetHash(), 0u) );
+    tx.vin.emplace_back( COutPoint(OutputHash(dummyTransaction.GetHash()), 0u) );
     tx.vout.push_back(CTxOut(100,managedScript));
     manager->addTransaction(tx,nullptr, true);
 
@@ -902,7 +904,7 @@ BOOST_AUTO_TEST_CASE(willStopRecognizingUTXOsForWhichTheScriptHasBeenRevoked)
     CBlock blockMiningDummyTx = getBlockToMineTransaction(dummyTransaction);
 
     CMutableTransaction tx;
-    tx.vin.emplace_back( COutPoint(dummyTransaction.GetHash(), 0u) );
+    tx.vin.emplace_back( COutPoint(OutputHash(dummyTransaction.GetHash()), 0u) );
     tx.vout.push_back(CTxOut(100,managedScript));
     CBlock block = getBlockToMineTransaction(tx);
     manager->addTransaction(tx,&block, true);
@@ -930,7 +932,7 @@ BOOST_AUTO_TEST_CASE(willWriteTxToBackendOnAddition)
     CBlock blockMiningDummyTx = getBlockToMineTransaction(dummyTransaction);
 
     CMutableTransaction tx;
-    tx.vin.emplace_back( COutPoint(dummyTransaction.GetHash(), 0u) );
+    tx.vin.emplace_back( COutPoint(OutputHash(dummyTransaction.GetHash()), 0u) );
     tx.vout.push_back(CTxOut(100,managedScript));
     CBlock block = getBlockToMineTransaction(tx);
 

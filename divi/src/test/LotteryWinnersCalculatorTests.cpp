@@ -78,7 +78,7 @@ public:
         {// Avoid flagging as a coinbase tx
             const uint256 randomHash = uint256S("4f5e1dcf6b28438ecb4f92c37f72bc430055fc91651f3dbc22050eb93164c579");
             constexpr uint32_t randomIndex = 42;
-            tx.vin[0].prevout = COutPoint(randomHash,randomIndex);
+            tx.vin[0].prevout = COutPoint(OutputHash(randomHash), randomIndex);
         }
         assert(CTransaction(tx).IsCoinStake());
         return tx;

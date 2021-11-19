@@ -30,8 +30,8 @@ protected:
 
   ScriptCLTVTestFixture()
   {
-    tx.vin.emplace_back(uint256(), 0, CScript(), 1);
-    tx.vin.emplace_back(uint256(), 0, CScript(), 1);
+    tx.vin.emplace_back(OutputHash(uint256()), 0, CScript(), 1);
+    tx.vin.emplace_back(OutputHash(uint256()), 0, CScript(), 1);
   }
 
   /** Asserts that a given script is invalid with CLTV enabled in combination

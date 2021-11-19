@@ -258,6 +258,7 @@ BITCOIN_CORE_H = \
   BlockMemoryPoolTransactionCollector.h \
   CoinMinter.h \
   CoinMintingModule.h \
+  OutputHash.h \
   PoSTransactionCreator.h \
   PeerNotificationOfMintService.h \
   MonthlyWalletBackupCreator.h \

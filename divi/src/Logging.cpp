@@ -9,6 +9,7 @@
 
 #include <DataDirectory.h>
 #include <chainparamsbase.h>
+#include <OutputHash.h>
 #include <uint256.h>
 #include <serialize.h>
 #include <Settings.h>
@@ -22,6 +23,7 @@ bool fLogIPs = false;
 
 extern Settings& settings;
 
+LOG_FORMAT_WITH_TOSTRING(OutputHash)
 LOG_FORMAT_WITH_TOSTRING(uint256)
 
 namespace

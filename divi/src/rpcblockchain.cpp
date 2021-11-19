@@ -447,8 +447,8 @@ Value gettxout(const Array& params, bool fHelp)
 
     Object ret;
 
-    std::string strHash = params[0].get_str();
-    uint256 hash(strHash);
+    const std::string strHash = params[0].get_str();
+    const OutputHash hash(uint256S(strHash));
     int n = params[1].get_int();
     bool fMempool = true;
     if (params.size() > 2)

@@ -1,10 +1,11 @@
 #ifndef ORPHAN_TRANSACTIONS_H
 #define ORPHAN_TRANSACTIONS_H
 #include <NodeId.h>
+#include <OutputHash.h>
 #include <uint256.h>
 #include <set>
 class CTransaction;
-const std::set<uint256>& GetOrphanSpendingTransactionIds(const uint256& txHash);
+const std::set<uint256>& GetOrphanSpendingTransactionIds(const OutputHash& txHash);
 const CTransaction& GetOrphanTransaction(const uint256& txHash, NodeId& peer);
 bool OrphanTransactionIsKnown(const uint256& hash);
 bool AddOrphanTx(const CTransaction& tx, NodeId peer);
