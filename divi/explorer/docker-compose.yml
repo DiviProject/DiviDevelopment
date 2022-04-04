@@ -1,0 +1,21 @@
+version: '3.7'
+services:
+  web:
+    depends_on:
+      - database
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ".:/root/local_dependencies/"
+    links:
+      - "database:mongo_database"
+
+  database:
+    build:
+      context: .
+      dockerfile: DatabaseFile
+    ports:
+      - "27017:27017"
