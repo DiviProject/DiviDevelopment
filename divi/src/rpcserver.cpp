@@ -17,6 +17,7 @@
 #ifdef ENABLE_WALLET
 #include "wallet.h"
 #endif
+#include "RPCContext.h"
 #include "Settings.h"
 #include <utilmoneystr.h>
 #include <random.h>
@@ -162,20 +163,30 @@ using namespace boost::asio;
 using namespace json_spirit;
 using namespace std;
 extern Settings& settings;
-static std::string strRPCUserColonPass;
 
-static bool fRPCRunning = false;
-static bool fRPCInWarmup = true;
-static std::string rpcWarmupStatus("RPC server started");
-static CCriticalSection cs_rpcWarmup;
+namespace
+{
+
+std::string strRPCUserColonPass;
+
+bool fRPCRunning = false;
+bool fRPCInWarmup = true;
+std::string rpcWarmupStatus("RPC server started");
+CCriticalSection cs_rpcWarmup;
 
 //! These are created by StartRPCThreads, destroyed in StopRPCThreads
-static asio::io_service* rpc_io_service = NULL;
-static map<string, boost::shared_ptr<deadline_timer> > deadlineTimers;
-static boost::thread_group* rpc_worker_group = NULL;
-static boost::asio::io_service::work* rpc_dummy_work = NULL;
-static std::vector<CSubNet> rpc_allow_subnets; //!< List of subnets to allow RPC connections from
-static std::vector<boost::shared_ptr<ip::tcp::acceptor> > rpc_acceptors;
+asio::io_service* rpc_io_service = NULL;
+std::map<std::string, boost::shared_ptr<deadline_timer> > deadlineTimers;
+boost::thread_group* rpc_worker_group = NULL;
+boost::asio::io_service::work* rpc_dummy_work = NULL;
+std::vector<CSubNet> rpc_allow_subnets; //!< List of subnets to allow RPC connections from
+std::vector<boost::shared_ptr<ip::tcp::acceptor> > rpc_acceptors;
+
+/** The global RPCContext instance.  It is created when the RPC server
+ *  has finished warmup, and destructed when the RPC threads are stopped.  */
+std::unique_ptr<RPCContext> rpcContext;
+
+} // anonymous namespace
 
 void RPCTypeCheck(const Array& params,
     const list<Value_type>& typesExpected,
@@ -787,6 +798,7 @@ void StopRPCThreads()
     rpc_worker_group = NULL;
     delete rpc_io_service;
     rpc_io_service = NULL;
+    rpcContext.reset();
 }
 
 bool IsRPCRunning()
@@ -804,6 +816,7 @@ void SetRPCWarmupFinished()
 {
     LOCK(cs_rpcWarmup);
     assert(fRPCInWarmup);
+    rpcContext.reset(new RPCContext());
     fRPCInWarmup = false;
 }
 
@@ -813,6 +826,12 @@ bool RPCIsInWarmup(std::string* outStatus)
     if (outStatus)
         *outStatus = rpcWarmupStatus;
     return fRPCInWarmup;
+}
+
+RPCContext& RPCContext::Get()
+{
+    assert(rpcContext != nullptr);
+    return *rpcContext;
 }
 
 void RPCRunHandler(const boost::system::error_code& err, boost::function<void(void)> func)

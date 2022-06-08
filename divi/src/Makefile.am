@@ -216,6 +216,7 @@ BITCOIN_CORE_H = \
   IndexDatabaseUpdateCollector.h \
   NodeState.h \
   NodeStateRegistry.h \
+  RPCContext.h \
   BlocksInFlightRegistry.h \
   NodeSignals.h \
   BlockRejects.h\
@@ -436,6 +437,7 @@ libbitcoin_server_a_SOURCES = \
   NodeState.cpp \
   BlocksInFlightRegistry.cpp \
   NodeStateRegistry.cpp \
+  RPCContext.cpp \
   BlockFileHelpers.cpp \
   main.cpp \
   TransactionSearchIndexes.cpp \
