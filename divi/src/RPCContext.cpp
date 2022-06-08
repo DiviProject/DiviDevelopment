@@ -1,5 +1,9 @@
 #include "RPCContext.h"
 
-RPCContext::RPCContext () = default;
+#include "spork.h"
+
+RPCContext::RPCContext ()
+  : sporkManager(GetSporkManager ())
+{}
 
 RPCContext::~RPCContext () = default;

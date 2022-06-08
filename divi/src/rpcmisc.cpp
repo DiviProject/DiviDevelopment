@@ -8,6 +8,7 @@
 #include "base58.h"
 #include "clientversion.h"
 #include "init.h"
+#include <RPCContext.h>
 #include <rpcprotocol.h>
 #include "rpcserver.h"
 #include "spork.h"
@@ -278,7 +279,8 @@ public:
 */
 Value spork(const Array& params, bool fHelp, CWallet* pwallet)
 {
-    CSporkManager& sporkManager = GetSporkManager();
+    auto& ctx = RPCContext::Get();
+    CSporkManager& sporkManager = ctx.SporkManager();
     if (params.size() == 1 && params[0].get_str() == "show") {
         Object ret;
         for (int nSporkID = SPORK_START; nSporkID <= SPORK_END; nSporkID++) {

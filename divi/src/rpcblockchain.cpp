@@ -6,6 +6,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <ChainstateManager.h>
+#include <RPCContext.h>
 #include "checkpoints.h"
 #include "main.h"
 #include "BlockDiskAccessor.h"
@@ -27,7 +28,6 @@
 #include <JsonTxHelpers.h>
 #include <init.h>
 #include <JsonBlockHelpers.h>
-#include <spork.h>
 
 using namespace json_spirit;
 using namespace std;
@@ -628,6 +628,7 @@ Value invalidateblock(const Array& params, bool fHelp, CWallet* pwallet)
     uint256 hash(strHash);
     CValidationState state;
 
+    auto& ctx = RPCContext::Get();
     ChainstateManager::Reference chainstate;
     auto& blockMap = chainstate->GetBlockMap();
     const auto mit = blockMap.find(hash);
@@ -638,7 +639,7 @@ Value invalidateblock(const Array& params, bool fHelp, CWallet* pwallet)
     InvalidateBlock(*chainstate, state, pblockindex);
 
     if (state.IsValid()) {
-        ActivateBestChain(*chainstate, GetSporkManager(), state);
+        ActivateBestChain(*chainstate, ctx.SporkManager(), state);
     }
 
     if (!state.IsValid()) {
@@ -665,6 +666,7 @@ Value reconsiderblock(const Array& params, bool fHelp, CWallet* pwallet)
     uint256 hash(strHash);
     CValidationState state;
 
+    auto& ctx = RPCContext::Get();
     ChainstateManager::Reference chainstate;
     auto& blockMap = chainstate->GetBlockMap();
     const auto mit = blockMap.find(hash);
@@ -675,7 +677,7 @@ Value reconsiderblock(const Array& params, bool fHelp, CWallet* pwallet)
     ReconsiderBlock(*chainstate, state, pblockindex);
 
     if (state.IsValid()) {
-        ActivateBestChain(*chainstate, GetSporkManager(), state);
+        ActivateBestChain(*chainstate, ctx.SporkManager(), state);
     }
 
     if (!state.IsValid()) {

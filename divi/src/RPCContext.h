@@ -1,10 +1,16 @@
 #ifndef RPC_CONTEXT_H
 #define RPC_CONTEXT_H
 
+class CSporkManager;
+
 /** This class holds all the "context" (such as the chainstate, masternode
  *  and other references) needed to handle RPC method calls.  */
 class RPCContext
 {
+
+private:
+
+  CSporkManager& sporkManager;
 
 public:
 
@@ -22,6 +28,12 @@ public:
    *  This method is implemented in rpcserver.cpp.
    */
   static RPCContext& Get ();
+
+  CSporkManager&
+  SporkManager ()
+  {
+    return sporkManager;
+  }
 
 };
 
