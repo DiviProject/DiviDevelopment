@@ -5,6 +5,7 @@
 #include <stdint.h>
 class CBlockIndex;
 class CKeyStore;
+class RPCContext;
 class StoredMasternodeBroadcasts;
 struct MasternodeStartResult
 {
@@ -55,10 +56,10 @@ struct MasternodeCountData
 /** Relays a broadcast given in serialised form as hex string.  If the signature
  *  is present, then it will replace the signature in the broadcast.  If
  *  updatePing is true, then the masternode ping is re-signed freshly.  */
-MasternodeStartResult RelayMasternodeBroadcast(const std::string& hexData, const std::string& signature, bool updatePing);
+MasternodeStartResult RelayMasternodeBroadcast(const RPCContext& ctx, const std::string& hexData, const std::string& signature, bool updatePing);
 bool SignMasternodeBroadcast(const CKeyStore& keystore, std::string& hexData);
-MasternodeStartResult StartMasternode(const CKeyStore& keyStore, const StoredMasternodeBroadcasts& stored, std::string alias, bool deferRelay);
-ActiveMasternodeStatus GetActiveMasternodeStatus();
-std::vector<MasternodeListEntry> GetMasternodeList(std::string strFilter, const CBlockIndex* chainTip);
-MasternodeCountData GetMasternodeCounts(const CBlockIndex* chainTip);
+MasternodeStartResult StartMasternode(const RPCContext& ctx, const CKeyStore& keyStore, const StoredMasternodeBroadcasts& stored, std::string alias, bool deferRelay);
+ActiveMasternodeStatus GetActiveMasternodeStatus(const RPCContext& ctx);
+std::vector<MasternodeListEntry> GetMasternodeList(const RPCContext& ctx, std::string strFilter, const CBlockIndex* chainTip);
+MasternodeCountData GetMasternodeCounts(const RPCContext& ctx, const CBlockIndex* chainTip);
 #endif// RPC_MASTERNODE_FEATURES_H

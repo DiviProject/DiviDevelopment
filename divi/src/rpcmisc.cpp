@@ -8,6 +8,7 @@
 #include "base58.h"
 #include "clientversion.h"
 #include "init.h"
+#include <RPCContext.h>
 #include <rpcprotocol.h>
 #include "rpcserver.h"
 #include "spork.h"
@@ -199,9 +200,11 @@ Value mnsync(const Array& params, bool fHelp, CWallet* pwallet)
             HelpExampleCli("mnsync", "\"status\"") + HelpExampleRpc("mnsync", "\"status\""));
     }
 
+    auto& ctx = RPCContext::Get ();
+
     if (strMode == "status") {
         Object obj;
-        const CMasternodeSync& masternodeSynchronization = GetMasternodeModule().getMasternodeSynchronization();
+        const CMasternodeSync& masternodeSynchronization = ctx.MasternodeModule().getMasternodeSynchronization();
         obj.push_back(Pair("IsBlockchainSynced", IsBlockchainSynced()));
         obj.push_back(Pair("timestampOfLastMasternodeListUpdate", masternodeSynchronization.timestampOfLastMasternodeListUpdate));
         obj.push_back(Pair("timestampOfLastMasternodeWinnerUpdate", masternodeSynchronization.timestampOfLastMasternodeWinnerUpdate));
@@ -278,7 +281,8 @@ public:
 */
 Value spork(const Array& params, bool fHelp, CWallet* pwallet)
 {
-    CSporkManager& sporkManager = GetSporkManager();
+    auto& ctx = RPCContext::Get();
+    CSporkManager& sporkManager = ctx.SporkManager();
     if (params.size() == 1 && params[0].get_str() == "show") {
         Object ret;
         for (int nSporkID = SPORK_START; nSporkID <= SPORK_END; nSporkID++) {
@@ -1055,6 +1059,7 @@ Value getstakingstatus(const Array& params, bool fHelp, CWallet* pwallet)
             "\nExamples:\n" +
             HelpExampleCli("getstakingstatus", "") + HelpExampleRpc("getstakingstatus", ""));
 
+    auto& ctx = RPCContext::Get ();
     const ChainstateManager::Reference chainstate;
 
     Object obj;
@@ -1068,7 +1073,7 @@ Value getstakingstatus(const Array& params, bool fHelp, CWallet* pwallet)
         obj.push_back(Pair("enoughcoins", stakkingBalance > 0 ));
     }
 
-    obj.push_back(Pair("mnsync", GetMasternodeModule().getMasternodeSynchronization().IsSynced()));
+    obj.push_back(Pair("mnsync", ctx.MasternodeModule().getMasternodeSynchronization().IsSynced()));
 
     bool nStaking = HasRecentlyAttemptedToGenerateProofOfStake();
     obj.push_back(Pair("staking status", nStaking));

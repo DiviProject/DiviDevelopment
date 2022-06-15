@@ -2,6 +2,7 @@
 
 #include <base58address.h>
 #include <MasternodeModule.h>
+#include <RPCContext.h>
 #include <masternode.h>
 #include <keystore.h>
 #include <streams.h>
@@ -78,9 +79,9 @@ namespace
 
 /** Relays an already parsed masternode broadcast, optionally updating the
  *  contained ping if we can (because it is our masternode).  */
-MasternodeStartResult RelayParsedMasternodeBroadcast(CMasternodeBroadcast mnb, const bool updatePing)
+MasternodeStartResult RelayParsedMasternodeBroadcast(const RPCContext& ctx, CMasternodeBroadcast mnb, const bool updatePing)
 {
-    const auto& mnModule = GetMasternodeModule();
+    const auto& mnModule = ctx.MasternodeModule();
     auto& activeMasternode = mnModule.getActiveMasternode();
     auto& mnodeman = mnModule.getMasternodeManager();
 
@@ -146,18 +147,18 @@ bool SignMasternodeBroadcast(const CKeyStore& keystore, std::string& hexData)
     return true;
 }
 
-MasternodeStartResult RelayMasternodeBroadcast(const std::string& hexData, const std::string& signature, const bool updatePing)
+MasternodeStartResult RelayMasternodeBroadcast(const RPCContext& ctx, const std::string& hexData, const std::string& signature, const bool updatePing)
 {
     CMasternodeBroadcast mnb = readFromHex<CMasternodeBroadcast>(hexData);
     if(!signature.empty())
         mnb.signature = ParseHex(signature);
 
-    return RelayParsedMasternodeBroadcast(mnb, updatePing);
+    return RelayParsedMasternodeBroadcast(ctx, mnb, updatePing);
 }
 
-MasternodeStartResult StartMasternode(const CKeyStore& keyStore, const StoredMasternodeBroadcasts& stored, std::string alias, bool deferRelay)
+MasternodeStartResult StartMasternode(const RPCContext& ctx, const CKeyStore& keyStore, const StoredMasternodeBroadcasts& stored, std::string alias, bool deferRelay)
 {
-    const auto& mnModule = GetMasternodeModule();
+    const auto& mnModule = ctx.MasternodeModule();
 
     MasternodeStartResult result;
     for(const auto& configEntry : mnModule.getMasternodeConfigurations().getEntries())
@@ -206,16 +207,16 @@ MasternodeStartResult StartMasternode(const CKeyStore& keyStore, const StoredMas
             return result;
         }
 
-        return RelayParsedMasternodeBroadcast (mnb, updatePing);
+        return RelayParsedMasternodeBroadcast (ctx, mnb, updatePing);
     }
     result.status = false;
     result.errorMessage = "Invalid alias, couldn't find MN. Check your masternode.conf file";
     return result;
 }
 
-ActiveMasternodeStatus GetActiveMasternodeStatus()
+ActiveMasternodeStatus GetActiveMasternodeStatus(const RPCContext& ctx)
 {
-    const auto& mnModule = GetMasternodeModule();
+    const auto& mnModule = ctx.MasternodeModule();
     if (!mnModule.localNodeIsAMasternode()) throw std::runtime_error("This is not a masternode");
     auto& activeMasternode = mnModule.getActiveMasternode();
     auto& mnodeman = mnModule.getMasternodeManager();
@@ -276,9 +277,9 @@ unsigned FindLastPayeePaymentTime(const CBlockIndex* chainTip, const MasternodeP
     return 0u;
 }
 
-std::vector<MasternodeListEntry> GetMasternodeList(std::string strFilter, const CBlockIndex* chainTip)
+std::vector<MasternodeListEntry> GetMasternodeList(const RPCContext& ctx, std::string strFilter, const CBlockIndex* chainTip)
 {
-    const auto& mnModule = GetMasternodeModule();
+    const auto& mnModule = ctx.MasternodeModule();
     auto& networkMessageManager = mnModule.getNetworkMessageManager();
     const MasternodePaymentData& paymentData = mnModule.getMasternodePaymentData();
 
@@ -324,9 +325,9 @@ std::vector<MasternodeListEntry> GetMasternodeList(std::string strFilter, const 
     return masternodeList;
 }
 
-static int StableMasternodeCount()
+static int StableMasternodeCount(const RPCContext& ctx)
 {
-    const auto& mnModule = GetMasternodeModule();
+    const auto& mnModule = ctx.MasternodeModule();
     auto& networkMessageManager = mnModule.getNetworkMessageManager();
     AssertLockHeld(networkMessageManager.cs_process_message);
     int nStable_size = 0;
@@ -353,9 +354,9 @@ static int StableMasternodeCount()
 }
 
 
-static void CountNetworks(int& ipv4, int& ipv6, int& onion)
+static void CountNetworks(const RPCContext& ctx, int& ipv4, int& ipv6, int& onion)
 {
-    const auto& mnModule = GetMasternodeModule();
+    const auto& mnModule = ctx.MasternodeModule();
     auto& networkMessageManager = mnModule.getNetworkMessageManager();
 
     mnModule.getMasternodeManager().Check();
@@ -393,9 +394,9 @@ static unsigned CountEnabled(const std::vector<CMasternode>& masternodes)
     return count;
 }
 
-MasternodeCountData GetMasternodeCounts(const CBlockIndex* chainTip)
+MasternodeCountData GetMasternodeCounts(const RPCContext& ctx, const CBlockIndex* chainTip)
 {
-    const auto& mnModule = GetMasternodeModule();
+    const auto& mnModule = ctx.MasternodeModule();
     auto& networkMessageManager = mnModule.getNetworkMessageManager();
     auto& masternodePayments = mnModule.getMasternodePayments();
 
@@ -405,8 +406,8 @@ MasternodeCountData GetMasternodeCounts(const CBlockIndex* chainTip)
 
     {
         LOCK(networkMessageManager.cs_process_message);
-        CountNetworks(data.ipv4, data.ipv6, data.onion);
-        data.stable = StableMasternodeCount();
+        CountNetworks(ctx, data.ipv4, data.ipv6, data.onion);
+        data.stable = StableMasternodeCount(ctx);
         data.enabledAndActive = CountEnabled(networkMessageManager.masternodes);
         data.total = networkMessageManager.masternodes.size();
     }

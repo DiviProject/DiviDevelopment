@@ -10,6 +10,7 @@
 #include "core_io.h"
 #include <chain.h>
 #include <ChainstateManager.h>
+#include <RPCContext.h>
 #include "init.h"
 #include <rpcprotocol.h>
 #include "rpcserver.h"
@@ -37,7 +38,6 @@
 
 #include "json/json_spirit_utils.h"
 #include "json/json_spirit_value.h"
-#include "spork.h"
 #include <boost/assign/list_of.hpp>
 #include <blockmap.h>
 #include <BlockDiskAccessor.h>
@@ -1795,14 +1795,17 @@ Value listreceivedbyaccount(const Array& params, bool fHelp, CWallet* pwallet)
     return ListReceived(pwallet, params, true);
 }
 
-static void MaybePushAddress(Object& entry, const CTxDestination& dest)
+namespace
+{
+
+void MaybePushAddress(Object& entry, const CTxDestination& dest)
 {
     CBitcoinAddress addr;
     if (addr.Set(dest))
         entry.push_back(Pair("address", addr.ToString()));
 }
 
-static std::string GetAccountAddressName(const CWallet& wallet, const CTxDestination &dest)
+std::string GetAccountAddressName(const CWallet& wallet, const CTxDestination &dest)
 {
     const AddressBook& addressBook = wallet.getAddressBookManager().getAddressBook();
     AddressBook::const_iterator mi = addressBook.find(dest);
@@ -1814,7 +1817,7 @@ static std::string GetAccountAddressName(const CWallet& wallet, const CTxDestina
     return std::string();
 }
 
-static int ComputeBlockHeightOfFirstConfirmation(const uint256 blockHash)
+int ComputeBlockHeightOfFirstConfirmation(const uint256 blockHash)
 {
     LOCK(cs_main);
     const ChainstateManager::Reference chainstate;
@@ -1823,7 +1826,7 @@ static int ComputeBlockHeightOfFirstConfirmation(const uint256 blockHash)
     return (it==blockMap.end() || it->second==nullptr)? 0 : it->second->nHeight;
 }
 
-static std::string ParseScriptAsAddressString(const CScript& scriptPubKey)
+std::string ParseScriptAsAddressString(const CScript& scriptPubKey)
 {
     CTxDestination parsedAddress;
     if(ExtractDestination(scriptPubKey, parsedAddress))
@@ -1839,9 +1842,9 @@ static std::string ParseScriptAsAddressString(const CScript& scriptPubKey)
         return "Unknown address";
     }
 }
-void ParseTransactionDetails(const CWallet& wallet, const CWalletTx& wtx, const string& strAccount, int nMinDepth, bool fLong, Array& ret, const UtxoOwnershipFilter& filter)
+void ParseTransactionDetails(RPCContext& ctx, const CWallet& wallet, const CWalletTx& wtx, const string& strAccount, int nMinDepth, bool fLong, Array& ret, const UtxoOwnershipFilter& filter)
 {
-    const SuperblockSubsidyContainer superblockSubsidies(Params(), GetSporkManager());
+    const SuperblockSubsidyContainer superblockSubsidies(Params(), ctx.SporkManager());
     const I_SuperblockHeightValidator& heightValidator = superblockSubsidies.superblockHeightValidator();
     const I_BlockSubsidyProvider& blockSubsidies = superblockSubsidies.blockSubsidiesProvider();
 
@@ -2030,6 +2033,8 @@ void ParseTransactionDetails(const CWallet& wallet, const CWalletTx& wtx, const 
     }
 }
 
+} // anonymous namespace
+
 Value listtransactions(const Array& params, bool fHelp, CWallet* pwallet)
 {
     if (fHelp || params.size() > 4)
@@ -2106,6 +2111,8 @@ Value listtransactions(const Array& params, bool fHelp, CWallet* pwallet)
     if (nFrom < 0)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Negative from");
 
+    auto& ctx = RPCContext::Get();
+
     Array ret;
 
     CWallet::TxItems txOrdered = pwallet->OrderedTxItems();
@@ -2113,7 +2120,7 @@ Value listtransactions(const Array& params, bool fHelp, CWallet* pwallet)
     // iterate backwards until we have nCount items to return:
     for (CWallet::TxItems::reverse_iterator it = txOrdered.rbegin(); it != txOrdered.rend(); ++it) {
         const CWalletTx* const pwtx = (*it).second;
-        ParseTransactionDetails(*pwallet, *pwtx, strAccount, 0, true, ret, filter);
+        ParseTransactionDetails(ctx, *pwallet, *pwtx, strAccount, 0, true, ret, filter);
         if ((int)ret.size() >= (nCount + nFrom)) break;
     }
     // ret is newest to oldest
@@ -2247,6 +2254,7 @@ Value listsinceblock(const Array& params, bool fHelp, CWallet* pwallet)
     UtxoOwnershipFilter filter;
     filter.addOwnershipType(isminetype::ISMINE_SPENDABLE);
 
+    auto& ctx = RPCContext::Get();
     const ChainstateManager::Reference chainstate;
     const auto& chain = chainstate->ActiveChain();
     const auto& blockMap = chainstate->GetBlockMap();
@@ -2280,7 +2288,7 @@ Value listsinceblock(const Array& params, bool fHelp, CWallet* pwallet)
         CWalletTx tx = *(*it);
 
         if (depth == -1 || pwallet->getConfirmationCalculator().GetNumberOfBlockConfirmations(tx) < depth)
-            ParseTransactionDetails(*pwallet, tx, "*", 0, true, transactions, filter);
+            ParseTransactionDetails(ctx, *pwallet, tx, "*", 0, true, transactions, filter);
     }
 
     const CBlockIndex* pblockLast = chain[chain.Height() + 1 - target_confirms];
@@ -2339,6 +2347,8 @@ Value gettransaction(const Array& params, bool fHelp, CWallet* pwallet)
         if (params[1].get_bool())
             filter.addOwnershipType(isminetype::ISMINE_WATCH_ONLY);
 
+    auto& ctx = RPCContext::Get();
+
     Object entry;
     const CWalletTx* txPtr = pwallet->GetWalletTx(hash);
     if (txPtr == nullptr)
@@ -2356,7 +2366,7 @@ Value gettransaction(const Array& params, bool fHelp, CWallet* pwallet)
     WalletTxToJSON(*pwallet,wtx, entry);
 
     Array details;
-    ParseTransactionDetails(*pwallet, wtx, "*", 0, false, details, filter);
+    ParseTransactionDetails(ctx, *pwallet, wtx, "*", 0, false, details, filter);
     entry.push_back(Pair("details", details));
 
     string strHex = EncodeHexTx(static_cast<CTransaction>(wtx));

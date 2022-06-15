@@ -1,7 +1,7 @@
 #include <chain.h>
 #include <ChainstateManager.h>
-#include <spork.h>
 #include <LotteryWinnersCalculator.h>
+#include <RPCContext.h>
 #include <SuperblockSubsidyContainer.h>
 #include <script/standard.h>
 #include <json/json_spirit_value.h>
@@ -40,11 +40,12 @@ Value getlotteryblockwinners(const Array& params, bool fHelp, CWallet* pwallet)
 
 
 
+    auto& ctx = RPCContext::Get();
     const auto& chainParameters = Params();
-    const SuperblockSubsidyContainer subsidyCointainer(chainParameters, GetSporkManager());
+    const SuperblockSubsidyContainer subsidyCointainer(chainParameters, ctx.SporkManager());
     const ChainstateManager::Reference chainstate;
     const LotteryWinnersCalculator calculator(
-        chainParameters.GetLotteryBlockStartBlock(), chainstate->ActiveChain(), GetSporkManager(),subsidyCointainer.superblockHeightValidator());
+        chainParameters.GetLotteryBlockStartBlock(), chainstate->ActiveChain(), ctx.SporkManager(),subsidyCointainer.superblockHeightValidator());
     const CBlockIndex* chainTip = chainstate->ActiveChain().Tip();
     if(!chainTip) throw JSONRPCError(RPC_MISC_ERROR,"Could not acquire lock on chain tip.");
     int blockHeight = (params.size()>0)? std::min(params[0].get_int(),chainTip->nHeight): chainTip->nHeight;
