@@ -5,6 +5,7 @@
 
 #include "activemasternode.h"
 #include <ChainstateManager.h>
+#include <RPCContext.h>
 #include "init.h"
 #include "main.h"
 #include <chain.h>
@@ -293,6 +294,8 @@ Value listmasternodes(const Array& params, bool fHelp, CWallet* pwallet)
             "\nExamples:\n" +
             HelpExampleCli("masternodelist", "") + HelpExampleRpc("masternodelist", ""));
 
+    auto& ctx = RPCContext::Get ();
+
     Array ret;
     const CBlockIndex* pindex;
     {
@@ -302,7 +305,7 @@ Value listmasternodes(const Array& params, bool fHelp, CWallet* pwallet)
         if(!pindex) return 0;
     }
 
-    std::vector<MasternodeListEntry> masternodeList = GetMasternodeList(strFilter,pindex);
+    std::vector<MasternodeListEntry> masternodeList = GetMasternodeList(ctx, strFilter,pindex);
     ret.reserve(masternodeList.size());
     for(auto& masternodeEntry : masternodeList)
     {
@@ -343,9 +346,10 @@ Value getmasternodecount (const Array& params, bool fHelp, CWallet* pwallet)
             "\nExamples:\n" +
             HelpExampleCli("getmasternodecount", "") + HelpExampleRpc("getmasternodecount", ""));
 
+    auto& ctx = RPCContext::Get ();
     const ChainstateManager::Reference chainstate;
     const CBlockIndex* tip = chainstate->ActiveChain().Tip();
-    MasternodeCountData data = GetMasternodeCounts(tip);
+    MasternodeCountData data = GetMasternodeCounts(ctx, tip);
 
     Object obj;
     obj.push_back(Pair("total", data.total));
@@ -381,7 +385,9 @@ Value broadcaststartmasternode(const Array& params, bool fHelp, CWallet* pwallet
         updatePing = true;
     }
 
-    const auto mnResult = RelayMasternodeBroadcast(params[0].get_str(), signature, updatePing);
+    auto& ctx = RPCContext::Get ();
+
+    const auto mnResult = RelayMasternodeBroadcast(ctx, params[0].get_str(), signature, updatePing);
 
     Object result;
     result.emplace_back("status", mnResult.status ? "success" : "failed");
@@ -407,9 +413,11 @@ Value startmasternode(const Array& params, bool fHelp, CWallet* pwallet)
     const std::string alias = params[0].get_str();
     const bool deferRelay = (params.size() == 1)? false: params[1].get_bool();
 
+    auto& ctx = RPCContext::Get ();
+
     EnsureWalletIsUnlocked(pwallet);
     Object result;
-    MasternodeStartResult mnResult = StartMasternode(*pwallet, GetMasternodeModule().getStoredBroadcasts(), alias, deferRelay);
+    MasternodeStartResult mnResult = StartMasternode(ctx, *pwallet, ctx.MasternodeModule().getStoredBroadcasts(), alias, deferRelay);
 
     result.push_back(Pair("status",mnResult.status?"success":"failed"));
     if(!mnResult.status)
@@ -445,7 +453,9 @@ Value getmasternodestatus (const Array& params, bool fHelp, CWallet* pwallet)
             "\nExamples:\n" +
             HelpExampleCli("getmasternodestatus", "") + HelpExampleRpc("getmasternodestatus", ""));
 
-    const ActiveMasternodeStatus activeMNStatus = GetActiveMasternodeStatus();
+    auto& ctx = RPCContext::Get ();
+
+    const ActiveMasternodeStatus activeMNStatus = GetActiveMasternodeStatus(ctx);
     if(!activeMNStatus.activeMasternodeFound)
     {
         throw std::runtime_error("Masternode not found in the list of available masternodes. Current status: "
@@ -527,6 +537,8 @@ Value getmasternodewinners (const Array& params, bool fHelp, CWallet* pwallet)
             "\nExamples:\n" +
             HelpExampleCli("getmasternodewinners", "") + HelpExampleRpc("getmasternodewinners", ""));
 
+    auto& ctx = RPCContext::Get ();
+
     int nHeight;
     const CBlockIndex* pindex = nullptr;
     {
@@ -548,7 +560,7 @@ Value getmasternodewinners (const Array& params, bool fHelp, CWallet* pwallet)
         strFilter = params[1].get_str();
 
     Array ret;
-    const MasternodePaymentData& paymentData = GetMasternodeModule().getMasternodePaymentData();
+    const MasternodePaymentData& paymentData = ctx.MasternodeModule().getMasternodePaymentData();
     for (int i = nHeight - nLast; i < nHeight + 20; i++) {
         Object obj;
         obj.push_back(Pair("nHeight", i));
@@ -604,13 +616,15 @@ Value importmnbroadcast(const Array& params, bool fHelp, CWallet* pwallet)
                 "\nResult:\n"
                 "true|false          (boolean) true on success\n");
 
+    auto& ctx = RPCContext::Get ();
+
     std::vector<unsigned char> hex = ParseHex(params[0].get_str());
     CDataStream ss(hex,SER_NETWORK,PROTOCOL_VERSION);
 
     CMasternodeBroadcast mnb;
     ss >> mnb;
 
-    return GetMasternodeModule().getStoredBroadcasts().AddBroadcast(mnb);
+    return ctx.MasternodeModule().getStoredBroadcasts().AddBroadcast(mnb);
 }
 
 Value listmnbroadcasts(const Array& params, bool fHelp, CWallet* pwallet)
@@ -629,9 +643,11 @@ Value listmnbroadcasts(const Array& params, bool fHelp, CWallet* pwallet)
             "  }, ...\n"
             "]\n");
 
+    auto& ctx = RPCContext::Get ();
+
     Array res;
 
-    for (const auto& entry : GetMasternodeModule().getStoredBroadcasts().GetMap())
+    for (const auto& entry : ctx.MasternodeModule().getStoredBroadcasts().GetMap())
       {
         const auto& mnb = entry.second;
 

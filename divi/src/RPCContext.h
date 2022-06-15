@@ -2,6 +2,7 @@
 #define RPC_CONTEXT_H
 
 class CSporkManager;
+class MasternodeModule;
 
 /** This class holds all the "context" (such as the chainstate, masternode
  *  and other references) needed to handle RPC method calls.  */
@@ -11,6 +12,7 @@ class RPCContext
 private:
 
   CSporkManager& sporkManager;
+  const ::MasternodeModule& masternodeModule;
 
 public:
 
@@ -33,6 +35,12 @@ public:
   SporkManager ()
   {
     return sporkManager;
+  }
+
+  const ::MasternodeModule&
+  MasternodeModule () const
+  {
+    return masternodeModule;
   }
 
 };

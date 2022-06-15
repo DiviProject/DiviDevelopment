@@ -1,9 +1,10 @@
 #include "RPCContext.h"
 
 #include "spork.h"
+#include "MasternodeModule.h"
 
 RPCContext::RPCContext ()
-  : sporkManager(GetSporkManager ())
+  : sporkManager(GetSporkManager ()), masternodeModule(GetMasternodeModule ())
 {}
 
 RPCContext::~RPCContext () = default;
