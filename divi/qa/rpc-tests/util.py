@@ -19,7 +19,12 @@ import re
 from authproxy import AuthServiceProxy, JSONRPCException
 from util import *
 
+cli_timeout = 30
 portSeedsByPID = {}
+
+def set_cli_timeout(updated_timeout = None):
+    if updated_timeout:
+        cli_timeout = updated_timeout
 
 def set_port_seed(port_seed):
     portSeedsByPID[os.getpid()] = port_seed
@@ -141,10 +146,10 @@ def start_node(i, dirname, extra_args=None, mn_config_lines=[], rpchost=None, da
       f.write("\n".join(mn_config_lines))
     binary = []
     runner_name = None
-    timeout_limit = 30.0
+    timeout_limit = cli_timeout
     if os.getenv("RUNNER") is not None:
       runner_name = os.getenv("RUNNER")
-      timeout_limit = 60.0
+      timeout_limit += 30.0
       binary.append(runner_name)
       if os.getenv("RUNNER_FLAGS") is not None:
         flags = str(os.getenv("RUNNER_FLAGS")).split(" ")
@@ -175,7 +180,7 @@ def start_node(i, dirname, extra_args=None, mn_config_lines=[], rpchost=None, da
       url += "%s:%d" % (rpchost, rpc_port(i))
     else:
       url += "127.0.0.1:%d" % rpc_port(i)
-    proxy = AuthServiceProxy(url)
+    proxy = AuthServiceProxy(url,timeout=cli_timeout)
     proxy.url = url # store URL on proxy for info
     return proxy
 
