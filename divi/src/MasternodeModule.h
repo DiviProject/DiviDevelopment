@@ -69,7 +69,6 @@ public:
 const MasternodeModule& GetMasternodeModule();
 
 // Used in main to manage signals back and forth
-bool VoteForMasternodePayee(const CBlockIndex* pindex);
 void ProcessMasternodeMessages(CNode* pfrom, std::string strCommand, CDataStream& vRecv);
 bool MasternodeWinnerIsKnown(const uint256& inventoryHash);
 bool MasternodeIsKnown(const uint256& inventoryHash);
