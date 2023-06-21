@@ -6,18 +6,21 @@ class CDiskBlockPos;
 class CCriticalSection;
 class ChainstateManager;
 class I_BlockValidator;
+class MasternodeModule;
 class BlockSubmitter final: public I_BlockSubmitter
 {
 private:
     const I_BlockValidator& blockValidator_;
     CCriticalSection& mainCriticalSection_;
     ChainstateManager& chainstate_;
+    const MasternodeModule& mnModule_;
     bool IsBlockValidChainExtension(CBlock* pblock) const;
 public:
     BlockSubmitter(
         const I_BlockValidator& blockValidator,
         CCriticalSection& mainCriticalSection,
-        ChainstateManager& chainstate);
+        ChainstateManager& chainstate,
+        const MasternodeModule& mnModule);
     bool submitBlockForChainExtension(CBlock& block) const override;
     bool acceptBlockForChainExtension(CValidationState& state, CBlock& block, BlockDataSource blockDataSource) const override;
 };
