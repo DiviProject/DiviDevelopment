@@ -51,4 +51,5 @@ bool LoadAndSelectWallet(const std::string& walletFilename, bool initializeBacke
 void ReloadActiveWallet();
 bool SwitchCoinMintingModuleToWallet(const std::string activeWalletName);
 bool HasRecentlyAttemptedToGenerateProofOfStake();
+bool AlertsAreEnabled();
 #endif // BITCOIN_INIT_H

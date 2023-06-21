@@ -1648,16 +1648,6 @@ static bool Bind(UIMessenger& uiMessenger,const CService& addr, unsigned int fla
     return true;
 }
 
-static bool fAlerts = DEFAULT_ALERTS;
-bool AlertsAreEnabled()
-{
-    return fAlerts;
-}
-void EnableAlertsAccordingToSettings(const Settings& settings)
-{
-    fAlerts = settings.GetBoolArg("-alerts", DEFAULT_ALERTS);
-}
-
 bool SetNumberOfFileDescriptors(UIMessenger& uiMessenger, int& nFD)
 {
     nFD = RaiseFileDescriptorLimit(nMaxConnections + MIN_CORE_FILEDESCRIPTORS);
@@ -1717,8 +1707,6 @@ void SetNetworkingParameters()
     }
 
     setConnectionTimeoutDuration(settings.GetArg("-timeout", DEFAULT_CONNECT_TIMEOUT));
-
-    EnableAlertsAccordingToSettings(settings);
     if (settings.GetBoolArg("-peerbloomfilters", DEFAULT_PEERBLOOMFILTERS))
         EnableBloomFilters();
 
