@@ -60,6 +60,8 @@ public:
     StoredMasternodeBroadcasts& getStoredBroadcasts() const;
     bool localNodeIsAMasternode() const;
     void designateLocalNodeAsMasternode();
+
+    bool voteForMasternodePayee(const CBlockIndex* pindex) const;
 };
 
 // Used for downstream constructors and use cases

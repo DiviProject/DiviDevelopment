@@ -42,7 +42,7 @@ bool ProcessNewBlock(const MasternodeModule& mnModule,const I_BlockValidator& bl
 
     if(!blockValidator.connectActiveChain(*pblock,state)) return false;
 
-    VoteForMasternodePayee(pindex);
+    mnModule.voteForMasternodePayee(pindex);
     LogPrintf("%s : ACCEPTED in %ld milliseconds with size=%d\n", __func__, GetTimeMillis() - nStartTime,
               pblock->GetSerializeSize(SER_DISK, CLIENT_VERSION));
 

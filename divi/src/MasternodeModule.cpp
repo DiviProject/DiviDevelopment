@@ -141,6 +141,11 @@ StoredMasternodeBroadcasts& MasternodeModule::getStoredBroadcasts() const
      fMasterNode_ = true;
  }
 
+ bool MasternodeModule::voteForMasternodePayee(const CBlockIndex* pindex) const
+ {
+    return VoteForMasternodePayee(pindex);
+ }
+
 namespace
 {
 
