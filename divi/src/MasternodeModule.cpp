@@ -144,7 +144,69 @@ StoredMasternodeBroadcasts& MasternodeModule::getStoredBroadcasts() const
 
  bool MasternodeModule::voteForMasternodePayee(const CBlockIndex* pindex) const
  {
-    return VoteForMasternodePayee(pindex);
+    CMasternodeSync& masternodeSync = getMasternodeSynchronization();
+    CActiveMasternode& activeMasternode = getActiveMasternode();
+    CMasternodePayments& masternodePayments = getMasternodePayments();
+    if (!masternodeSync.IsMasternodeListSynced() || !localNodeIsAMasternode()) return false;
+    constexpr int numberOfBlocksIntoTheFutureToVoteOn = 10;
+    const int64_t currentBlockToVoteFor = pindex->nHeight + numberOfBlocksIntoTheFutureToVoteOn;
+
+    //reference node - hybrid mode
+
+    uint256 scoringBlockHash;
+    if (!GetBlockHashForScoring(scoringBlockHash, pindex, numberOfBlocksIntoTheFutureToVoteOn)) {
+        LogPrint("mnpayments", "CMasternodePayments::ProcessBlock - failed to compute scoring hash\n");
+        return false;
+    }
+
+    const unsigned n = masternodePayments.GetMasternodeRank(activeMasternode.vin, scoringBlockHash, ActiveProtocol(), CMasternodePayments::MNPAYMENTS_SIGNATURES_TOTAL);
+
+    if (n == static_cast<unsigned>(-1)) {
+        LogPrint("mnpayments", "CMasternodePayments::ProcessBlock - Unknown Masternode\n");
+        return false;
+    }
+
+    if (n > CMasternodePayments::MNPAYMENTS_SIGNATURES_TOTAL) {
+        LogPrint("mnpayments", "CMasternodePayments::ProcessBlock - Masternode not in the top %d (%d)\n", CMasternodePayments::MNPAYMENTS_SIGNATURES_TOTAL, n);
+        return false;
+    }
+
+    if (currentBlockToVoteFor <= lastBlockVotedOn) return false;
+
+    CMasternodePaymentWinner newWinner(activeMasternode.vin, currentBlockToVoteFor, scoringBlockHash);
+
+    LogPrint("masternode","CMasternodePayments::ProcessBlock() Start nHeight %d - vin %s. \n", currentBlockToVoteFor, activeMasternode.vin.prevout.hash);
+
+    // pay to the oldest MN that still had no payment but its input is old enough and it was active long enough
+    CScript payee = masternodePayments.GetNextMasternodePayeeInQueueForPayment(pindex, numberOfBlocksIntoTheFutureToVoteOn);
+
+    if (!payee.empty()) {
+        LogPrint("masternode","CMasternodePayments::ProcessBlock() Found by FindOldestNotInVec \n");
+
+        newWinner.AddPayee(payee);
+        LogPrint("masternode","CMasternodePayments::ProcessBlock() WinnerPayee %s nHeight %d. \n", payee, newWinner.GetHeight());
+    } else {
+        LogPrint("masternode","CMasternodePayments::ProcessBlock() Failed to find masternode to pay\n");
+    }
+
+    LogPrint("masternode","CMasternodePayments::ProcessBlock() - Signing Winner\n");
+    if(masternodePayments.CanVote(newWinner.vinMasternode.prevout,scoringBlockHash) && activeMasternode.SignMasternodeWinner(newWinner))
+    {
+        LogPrint("masternode","CMasternodePayments::ProcessBlock() - AddWinningMasternode\n");
+
+        if (masternodePayments.AddWinningMasternode(newWinner)) {
+            newWinner.Relay();
+            lastBlockVotedOn = currentBlockToVoteFor;
+            return true;
+        }
+    }
+    else
+    {
+        LogPrint("masternode","%s - Error signing masternode winner\n", __func__);
+    }
+
+
+    return false;
  }
 
 namespace
@@ -386,75 +448,6 @@ void ProcessMasternodeMessages(CNode* pfrom, std::string strCommand, CDataStream
         mnodeman.ProcessMNBroadcastsAndPings(pfrom, strCommand, vRecv);
         masternodePayments.ProcessMasternodeWinners(pfrom, strCommand, vRecv);
     }
-}
-
-bool VoteForMasternodePayee(const CBlockIndex* pindex)
-{
-    static const auto& mod = GetMasternodeModule();
-    static CMasternodeSync& masternodeSync = mod.getMasternodeSynchronization();
-    static CActiveMasternode& activeMasternode = mod.getActiveMasternode();
-    static CMasternodePayments& masternodePayments = mod.getMasternodePayments();
-    if (!masternodeSync.IsMasternodeListSynced() || !mod.localNodeIsAMasternode()) return false;
-    constexpr int numberOfBlocksIntoTheFutureToVoteOn = 10;
-    static int64_t lastBlockVotedOn = 0;
-    const int64_t currentBlockToVoteFor = pindex->nHeight + numberOfBlocksIntoTheFutureToVoteOn;
-
-    //reference node - hybrid mode
-
-    uint256 scoringBlockHash;
-    if (!GetBlockHashForScoring(scoringBlockHash, pindex, numberOfBlocksIntoTheFutureToVoteOn)) {
-        LogPrint("mnpayments", "CMasternodePayments::ProcessBlock - failed to compute scoring hash\n");
-        return false;
-    }
-
-    const unsigned n = masternodePayments.GetMasternodeRank(activeMasternode.vin, scoringBlockHash, ActiveProtocol(), CMasternodePayments::MNPAYMENTS_SIGNATURES_TOTAL);
-
-    if (n == static_cast<unsigned>(-1)) {
-        LogPrint("mnpayments", "CMasternodePayments::ProcessBlock - Unknown Masternode\n");
-        return false;
-    }
-
-    if (n > CMasternodePayments::MNPAYMENTS_SIGNATURES_TOTAL) {
-        LogPrint("mnpayments", "CMasternodePayments::ProcessBlock - Masternode not in the top %d (%d)\n", CMasternodePayments::MNPAYMENTS_SIGNATURES_TOTAL, n);
-        return false;
-    }
-
-    if (currentBlockToVoteFor <= lastBlockVotedOn) return false;
-
-    CMasternodePaymentWinner newWinner(activeMasternode.vin, currentBlockToVoteFor, scoringBlockHash);
-
-    LogPrint("masternode","CMasternodePayments::ProcessBlock() Start nHeight %d - vin %s. \n", currentBlockToVoteFor, activeMasternode.vin.prevout.hash);
-
-    // pay to the oldest MN that still had no payment but its input is old enough and it was active long enough
-    CScript payee = masternodePayments.GetNextMasternodePayeeInQueueForPayment(pindex, numberOfBlocksIntoTheFutureToVoteOn);
-
-    if (!payee.empty()) {
-        LogPrint("masternode","CMasternodePayments::ProcessBlock() Found by FindOldestNotInVec \n");
-
-        newWinner.AddPayee(payee);
-        LogPrint("masternode","CMasternodePayments::ProcessBlock() WinnerPayee %s nHeight %d. \n", payee, newWinner.GetHeight());
-    } else {
-        LogPrint("masternode","CMasternodePayments::ProcessBlock() Failed to find masternode to pay\n");
-    }
-
-    LogPrint("masternode","CMasternodePayments::ProcessBlock() - Signing Winner\n");
-    if(masternodePayments.CanVote(newWinner.vinMasternode.prevout,scoringBlockHash) && activeMasternode.SignMasternodeWinner(newWinner))
-    {
-        LogPrint("masternode","CMasternodePayments::ProcessBlock() - AddWinningMasternode\n");
-
-        if (masternodePayments.AddWinningMasternode(newWinner)) {
-            newWinner.Relay();
-            lastBlockVotedOn = currentBlockToVoteFor;
-            return true;
-        }
-    }
-    else
-    {
-        LogPrint("masternode","%s - Error signing masternode winner\n", __func__);
-    }
-
-
-    return false;
 }
 
 void LockUpMasternodeCollateral(const Settings& settings, std::function<void(const COutPoint&)> walletUtxoLockingFunction)
