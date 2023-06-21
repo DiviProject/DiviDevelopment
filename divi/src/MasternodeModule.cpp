@@ -61,7 +61,8 @@ MasternodeModule::MasternodeModule(
     const I_PeerSyncQueryService& peerSyncQueryService,
     const ChainstateManager& chainstate,
     CAddrMan& addressManager
-    ): fMasterNode_(false)
+    ): lastBlockVotedOn(0)
+    , fMasterNode_(false)
     , networkFulfilledRequestManager_(new CNetFulfilledRequestManager(clock))
     , networkMessageManager_( new MasternodeNetworkMessageManager)
     , masternodePaymentData_(new MasternodePaymentData)

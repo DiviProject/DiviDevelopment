@@ -31,6 +31,7 @@ class StoredMasternodeBroadcasts;
 class MasternodeModule
 {
 private:
+    mutable int64_t lastBlockVotedOn;
     bool fMasterNode_;
     std::unique_ptr<CNetFulfilledRequestManager> networkFulfilledRequestManager_;
     std::unique_ptr<MasternodeNetworkMessageManager> networkMessageManager_;
