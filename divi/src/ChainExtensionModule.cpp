@@ -92,7 +92,8 @@ ChainExtensionModule::ChainExtensionModule(
         new BlockSubmitter(
             *blockValidator_,
             mainCriticalSection,
-            chainstateManager_))
+            chainstateManager_,
+            masternodeModule))
 {
 }
 
