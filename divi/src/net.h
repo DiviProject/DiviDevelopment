@@ -99,7 +99,6 @@ struct CNodeStateStats {
 void GetNodeStateStats(std::vector<std::pair<CNodeStats,CNodeStateStats>>& vstats);
 
 class UIMessenger;
-bool AlertsAreEnabled();
 bool SetNumberOfFileDescriptors(UIMessenger& uiMessenger, int& nFD);
 void SetNetworkingParameters();
 bool InitializeP2PNetwork(UIMessenger& uiMessenger);

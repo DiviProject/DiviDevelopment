@@ -233,6 +233,17 @@ std::string GetWalletName()
     return 'Wallets currently disabled';
 #endif
 }
+
+static bool fAlerts = DEFAULT_ALERTS;
+bool AlertsAreEnabled()
+{
+    return fAlerts;
+}
+void EnableAlertsAccordingToSettings(const Settings& settings)
+{
+    fAlerts = settings.GetBoolArg("-alerts", DEFAULT_ALERTS);
+}
+
 static std::string stakingWalletName = "";
 
 void StartCoinMintingModule(boost::thread_group& threadGroup, I_StakingWallet& stakingWallet)
@@ -1414,6 +1425,7 @@ bool InitializeDivi(boost::thread_group& threadGroup)
     SetLoggingAndDebugSettings();
 
     SetNetworkingParameters();
+    EnableAlertsAccordingToSettings(settings);
 
     if(!EnableWalletFeatures())
     {
