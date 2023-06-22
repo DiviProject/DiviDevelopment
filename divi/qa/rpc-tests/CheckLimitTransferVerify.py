@@ -85,13 +85,37 @@ class CheckLimitTransferVerifyTest (BitcoinTestFramework):
         )
 
         scriptSig = CScript([OP_TRUE, bytearray.fromhex(limitTransferP2SHScript.hex())])
-        maliciousSpending = self.buildSpend(
-            output,
-            scriptSig,
-            destinations = [{"amount": 20*COIN, "script": receiverDestination}])
+        maliciousSpends = []
+        # Exceeds limit and does not return change amount
+        maliciousSpends.append(
+            self.buildSpend(
+                output,
+                scriptSig,
+                destinations = [{"amount": 20*COIN, "script": receiverDestination}])
+        )
+        # Does not exceed limit but does not return change amount
+        maliciousSpends.append(
+            self.buildSpend(
+                output,
+                scriptSig,
+                destinations = [{"amount": 9*COIN, "script": receiverDestination}])
+        )
+        # Does not exceed limit and returns change amount, but in the incorrect output index
+        maliciousSpends.append(
+            self.buildSpend(
+                output,
+                scriptSig,
+                destinations = [
+                    {"amount": 9*COIN, "script": receiverDestination},
+                    {"amount": 90*COIN, "script": changeAddressScript}
+                ]
+            )
+        )
 
-        assert_raises (JSONRPCException, self.node.sendrawtransaction, maliciousSpending.serialize().hex())
-        assert_raises (JSONRPCException, self.node.generateblock, {"extratx": [maliciousSpending.serialize ().hex ()]})
+        for spendingTx in maliciousSpends:
+            assert_raises (JSONRPCException, self.node.sendrawtransaction, spendingTx.serialize().hex())
+            assert_raises (JSONRPCException, self.node.generateblock, {"extratx": [spendingTx.serialize ().hex ()]})
+
         sync_blocks(self.nodes)
         self.node.setgenerate(20)
         sync_blocks(self.nodes)
