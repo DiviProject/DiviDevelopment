@@ -466,7 +466,14 @@ static bool SetPeerVersionAndServices(CCriticalSection& mainCriticalSection, CNo
     return true;
 }
 
-bool static ProcessMessage(CCriticalSection& mainCriticalSection, CNode* pfrom, std::string strCommand, CDataStream& vRecv, int64_t nTimeReceived)
+bool static ProcessMessage(
+    const MasternodeModule& mnModule,
+    CTxMemPool& mempool,
+    CCriticalSection& mainCriticalSection,
+    CNode* pfrom,
+    std::string strCommand,
+    CDataStream& vRecv,
+    int64_t nTimeReceived)
 {
     static CAddrMan& addrman = GetNetworkAddressManager();
     LogPrint("net","received: %s (%u bytes) peer=%d\n", SanitizeString(strCommand), vRecv.size(), pfrom->id);
@@ -727,7 +734,6 @@ bool static ProcessMessage(CCriticalSection& mainCriticalSection, CNode* pfrom, 
 
         CNode::ClearInventoryItem(inv);
 
-        CTxMemPool& mempool = GetTransactionMemoryPool();
         if ( MempoolConsensus::AcceptToMemoryPool(mempool, state, tx, true, &fMissingInputs))
         {
             mempool.check(&coinsTip, blockMap);
@@ -1048,7 +1054,9 @@ bool ProcessReceivedMessages(CNode* pfrom)
         // Process message
         bool fRet = false;
         try {
-            fRet = ProcessMessage(cs_main, pfrom, strCommand, msg.vRecv, msg.nTime);
+            const MasternodeModule& mnModule = GetMasternodeModule();
+            CTxMemPool& mempool = GetTransactionMemoryPool();
+            fRet = ProcessMessage(mnModule,mempool, cs_main, pfrom, strCommand, msg.vRecv, msg.nTime);
             boost::this_thread::interruption_point();
         } catch (std::ios_base::failure& e) {
             pfrom->PushMessage("reject", strCommand, REJECT_MALFORMED, string("error parsing message"));
