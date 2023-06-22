@@ -223,6 +223,33 @@ void MasternodeModule::processMasternodeMessages(CNode* pfrom, std::string strCo
     }
 }
 
+bool MasternodeModule::masternodeWinnerIsKnown(const uint256& inventoryHash)
+{
+    const MasternodePaymentData& paymentData = getMasternodePaymentData();
+    CMasternodeSync& masternodeSync = getMasternodeSynchronization();
+    if (paymentData.getPaymentWinnerForHash(inventoryHash) != nullptr)
+    {
+        masternodeSync.RecordMasternodeWinnerUpdate(inventoryHash);
+        return true;
+    }
+    return false;
+}
+bool MasternodeModule::masternodeIsKnown(const uint256& inventoryHash)
+{
+    const MasternodeNetworkMessageManager& networkMessageManager = getNetworkMessageManager();
+    CMasternodeSync& masternodeSync = getMasternodeSynchronization();
+    if (networkMessageManager.broadcastIsKnown(inventoryHash))
+    {
+        masternodeSync.RecordMasternodeListUpdate(inventoryHash);
+        return true;
+    }
+    return false;
+}
+bool MasternodeModule::masternodePingIsKnown(const uint256& inventoryHash)
+{
+    return getNetworkMessageManager().pingIsKnown(inventoryHash);
+}
+
 namespace
 {
 
@@ -414,37 +441,6 @@ bool ShareMasternodeWinnerWithPeer(CNode* peer,const uint256& inventoryHash)
     const auto* winner = paymentData.getPaymentWinnerForHash(inventoryHash);
     if (winner != nullptr) {
         peer->PushMessage("mnw", *winner);
-        return true;
-    }
-    return false;
-}
-
-bool MasternodePingIsKnown(const uint256& inventoryHash)
-{
-    static const MasternodeNetworkMessageManager& networkMessageManager = GetMasternodeModule().getNetworkMessageManager();
-    return networkMessageManager.pingIsKnown(inventoryHash);
-}
-bool MasternodeIsKnown(const uint256& inventoryHash)
-{
-    static const auto& mod = GetMasternodeModule();
-    static const MasternodeNetworkMessageManager& networkMessageManager = mod.getNetworkMessageManager();
-    static CMasternodeSync& masternodeSync = mod.getMasternodeSynchronization();
-    if (networkMessageManager.broadcastIsKnown(inventoryHash))
-    {
-        masternodeSync.RecordMasternodeListUpdate(inventoryHash);
-        return true;
-    }
-    return false;
-}
-
-bool MasternodeWinnerIsKnown(const uint256& inventoryHash)
-{
-    static const auto& mod = GetMasternodeModule();
-    static const MasternodePaymentData& paymentData = mod.getMasternodePaymentData();
-    static CMasternodeSync& masternodeSync = mod.getMasternodeSynchronization();
-    if (paymentData.getPaymentWinnerForHash(inventoryHash) != nullptr)
-    {
-        masternodeSync.RecordMasternodeWinnerUpdate(inventoryHash);
         return true;
     }
     return false;

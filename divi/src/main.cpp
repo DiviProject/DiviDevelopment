@@ -155,11 +155,11 @@ bool static AlreadyHave(const MasternodeModule& mnModule,const CTxMemPool& mempo
     case MSG_SPORK:
         return SporkDataIsKnown(inv.GetHash());
     case MSG_MASTERNODE_WINNER:
-        return MasternodeWinnerIsKnown(inv.GetHash());
+        return mnModule.masternodeWinnerIsKnown(inv.GetHash());
     case MSG_MASTERNODE_ANNOUNCE:
-        return MasternodeIsKnown(inv.GetHash());
+        return mnModule.masternodeIsKnown(inv.GetHash());
     case MSG_MASTERNODE_PING:
-        return MasternodePingIsKnown(inv.GetHash());
+        return mnModule.masternodePingIsKnown(inv.GetHash());
     }
     // Don't know what it is, just say we already got one
     return true;
