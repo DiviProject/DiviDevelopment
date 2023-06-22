@@ -165,7 +165,7 @@ bool static AlreadyHave(const MasternodeModule& mnModule,const CTxMemPool& mempo
     return true;
 }
 
-static bool PushKnownInventory(CNode* pfrom, const CInv& inv)
+static bool PushKnownInventory(const MasternodeModule& mnModule, const CTxMemPool& mempool, CNode* pfrom, const CInv& inv)
 {
     bool pushed = false;
     InventoryType type = static_cast<InventoryType>(inv.GetType());
@@ -174,7 +174,7 @@ static bool PushKnownInventory(CNode* pfrom, const CInv& inv)
     case InventoryType::MSG_TX:
         {
             CTransaction tx;
-            if (GetTransactionMemoryPool().lookup(inv.GetHash(), tx))
+            if (mempool.lookup(inv.GetHash(), tx))
             {
                 CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
                 ss.reserve(1000);
@@ -188,13 +188,13 @@ static bool PushKnownInventory(CNode* pfrom, const CInv& inv)
         pushed = ShareSporkDataWithPeer(pfrom,inv.GetHash());
         break;
     case InventoryType::MSG_MASTERNODE_WINNER:
-        pushed = ShareMasternodeWinnerWithPeer(pfrom,inv.GetHash());
+        pushed = mnModule.shareMasternodeWinnerWithPeer(pfrom,inv.GetHash());
         break;
     case InventoryType::MSG_MASTERNODE_ANNOUNCE:
-        pushed = ShareMasternodeBroadcastWithPeer(pfrom,inv.GetHash());
+        pushed = mnModule.shareMasternodeBroadcastWithPeer(pfrom,inv.GetHash());
         break;
     case InventoryType::MSG_MASTERNODE_PING:
-        pushed = ShareMasternodePingWithPeer(pfrom,inv.GetHash());
+        pushed = mnModule.shareMasternodePingWithPeer(pfrom,inv.GetHash());
         break;
     case InventoryType::MSG_FILTERED_BLOCK:
     case InventoryType::MSG_TXLOCK_REQUEST:
@@ -280,7 +280,7 @@ static void PushCorrespondingBlockToPeer(CNode* pfrom, const CBlockIndex* blockT
     }
 }
 
-void static ProcessGetData(CCriticalSection& mainCriticalSection, CNode* pfrom, std::deque<CInv>& requestsForData)
+void static ProcessGetData(const MasternodeModule& mnModule, const CTxMemPool& mempool, CCriticalSection& mainCriticalSection, CNode* pfrom, std::deque<CInv>& requestsForData)
 {
     const ChainstateManager::Reference chainstate;
 
@@ -321,7 +321,7 @@ void static ProcessGetData(CCriticalSection& mainCriticalSection, CNode* pfrom, 
             else if (inv.IsKnownType())
             {
                 // Send stream from relay memory
-                if(!RepeatRelayedInventory(pfrom,inv) && !PushKnownInventory(pfrom,inv))
+                if(!RepeatRelayedInventory(pfrom,inv) && !PushKnownInventory(mnModule, mempool, pfrom,inv))
                 {
                     vNotFound.push_back(inv);
                 }
@@ -348,7 +348,9 @@ void static ProcessGetData(CCriticalSection& mainCriticalSection, CNode* pfrom, 
 
 void RespondToRequestForDataFrom(CNode* pfrom)
 {
-    ProcessGetData(cs_main, pfrom, pfrom->GetRequestForDataQueue());
+    const MasternodeModule& mnModule = GetMasternodeModule();
+    const CTxMemPool& mempool = GetTransactionMemoryPool();
+    ProcessGetData(mnModule,mempool, cs_main, pfrom, pfrom->GetRequestForDataQueue());
 }
 
 constexpr const char* NetworkMessageType_VERSION = "version";

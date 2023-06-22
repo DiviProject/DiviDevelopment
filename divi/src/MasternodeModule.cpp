@@ -250,6 +250,39 @@ bool MasternodeModule::masternodePingIsKnown(const uint256& inventoryHash)
     return getNetworkMessageManager().pingIsKnown(inventoryHash);
 }
 
+bool MasternodeModule::shareMasternodeBroadcastWithPeer(CNode* peer,const uint256& inventoryHash)
+{
+    const MasternodeNetworkMessageManager& networkMessageManager = getNetworkMessageManager();
+    CMasternodeBroadcast& broadcast = networkMessageManager.getKnownBroadcast(inventoryHash);
+    if (broadcast.GetHash() == inventoryHash)
+    {
+        peer->PushMessage("mnb", broadcast);
+        return true;
+    }
+    return false;
+}
+bool MasternodeModule::shareMasternodePingWithPeer(CNode* peer,const uint256& inventoryHash)
+{
+    const MasternodeNetworkMessageManager& networkMessageManager = getNetworkMessageManager();
+    const CMasternodePing& ping = networkMessageManager.getKnownPing(inventoryHash);
+    if (ping.GetHash() == inventoryHash)
+    {
+        peer->PushMessage("mnp", ping);
+        return true;
+    }
+    return false;
+}
+bool MasternodeModule::shareMasternodeWinnerWithPeer(CNode* peer,const uint256& inventoryHash)
+{
+    const MasternodePaymentData& paymentData = getMasternodePaymentData();
+    const auto* winner = paymentData.getPaymentWinnerForHash(inventoryHash);
+    if (winner != nullptr) {
+        peer->PushMessage("mnw", *winner);
+        return true;
+    }
+    return false;
+}
+
 namespace
 {
 
@@ -409,41 +442,6 @@ void SaveMasternodeDataToDisk()
 void ForceMasternodeResync()
 {
     GetMasternodeModule().getMasternodeSynchronization().Reset();
-}
-
-bool ShareMasternodePingWithPeer(CNode* peer,const uint256& inventoryHash)
-{
-    static const MasternodeNetworkMessageManager& networkMessageManager = GetMasternodeModule().getNetworkMessageManager();
-    const CMasternodePing& ping = networkMessageManager.getKnownPing(inventoryHash);
-    if (ping.GetHash() == inventoryHash)
-    {
-        peer->PushMessage("mnp", ping);
-        return true;
-    }
-    return false;
-}
-
-bool ShareMasternodeBroadcastWithPeer(CNode* peer,const uint256& inventoryHash)
-{
-    static const MasternodeNetworkMessageManager& networkMessageManager = GetMasternodeModule().getNetworkMessageManager();
-    const CMasternodeBroadcast& broadcast = networkMessageManager.getKnownBroadcast(inventoryHash);
-    if (broadcast.GetHash() == inventoryHash)
-    {
-        peer->PushMessage("mnb", broadcast);
-        return true;
-    }
-    return false;
-}
-
-bool ShareMasternodeWinnerWithPeer(CNode* peer,const uint256& inventoryHash)
-{
-    static const MasternodePaymentData& paymentData = GetMasternodeModule().getMasternodePaymentData();
-    const auto* winner = paymentData.getPaymentWinnerForHash(inventoryHash);
-    if (winner != nullptr) {
-        peer->PushMessage("mnw", *winner);
-        return true;
-    }
-    return false;
 }
 
 void LockUpMasternodeCollateral(const Settings& settings, std::function<void(const COutPoint&)> walletUtxoLockingFunction)
