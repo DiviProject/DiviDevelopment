@@ -68,15 +68,13 @@ public:
     bool masternodeWinnerIsKnown(const uint256& inventoryHash);
     bool masternodeIsKnown(const uint256& inventoryHash);
     bool masternodePingIsKnown(const uint256& inventoryHash);
+    bool shareMasternodeBroadcastWithPeer(CNode* peer,const uint256& inventoryHash);
+    bool shareMasternodePingWithPeer(CNode* peer,const uint256& inventoryHash);
+    bool shareMasternodeWinnerWithPeer(CNode* peer,const uint256& inventoryHash);
 };
 
 // Used for downstream constructors and use cases
 const MasternodeModule& GetMasternodeModule();
-
-// Used in main to manage signals back and forth
-bool ShareMasternodeBroadcastWithPeer(CNode* peer,const uint256& inventoryHash);
-bool ShareMasternodePingWithPeer(CNode* peer,const uint256& inventoryHash);
-bool ShareMasternodeWinnerWithPeer(CNode* peer,const uint256& inventoryHash);
 
 //Used in rpcmisc for manual restart of mn sync
 void ForceMasternodeResync();
