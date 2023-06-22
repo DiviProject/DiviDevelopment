@@ -71,13 +71,13 @@ public:
     bool shareMasternodeBroadcastWithPeer(CNode* peer,const uint256& inventoryHash) const;
     bool shareMasternodePingWithPeer(CNode* peer,const uint256& inventoryHash) const;
     bool shareMasternodeWinnerWithPeer(CNode* peer,const uint256& inventoryHash) const;
+
+    //Used in rpcmisc.cpp for manual restart of mn sync
+    void forceMasternodeResync() const;
 };
 
 // Used for downstream constructors and use cases
 const MasternodeModule& GetMasternodeModule();
-
-//Used in rpcmisc for manual restart of mn sync
-void ForceMasternodeResync();
 
 // Used for initialization
 void ThreadMasternodeBackgroundSync();

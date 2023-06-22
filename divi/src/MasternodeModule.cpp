@@ -283,6 +283,11 @@ bool MasternodeModule::shareMasternodeWinnerWithPeer(CNode* peer,const uint256& 
     return false;
 }
 
+void MasternodeModule::forceMasternodeResync() const
+{
+    getMasternodeSynchronization().Reset();
+}
+
 namespace
 {
 
@@ -437,11 +442,6 @@ void SaveMasternodeDataToDisk()
         CFlatDB<CNetFulfilledRequestManager> flatdb4("netfulfilled.dat", "magicFulfilledCache");
         flatdb4.Dump(networkFulfilledRequestManager);
     }
-}
-
-void ForceMasternodeResync()
-{
-    GetMasternodeModule().getMasternodeSynchronization().Reset();
 }
 
 void LockUpMasternodeCollateral(const Settings& settings, std::function<void(const COutPoint&)> walletUtxoLockingFunction)
