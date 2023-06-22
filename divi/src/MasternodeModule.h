@@ -64,15 +64,16 @@ public:
 
     bool voteForMasternodePayee(const CBlockIndex* pindex) const;
     void processMasternodeMessages(CNode* pfrom, std::string strCommand, CDataStream& vRecv) const;
+
+    bool masternodeWinnerIsKnown(const uint256& inventoryHash);
+    bool masternodeIsKnown(const uint256& inventoryHash);
+    bool masternodePingIsKnown(const uint256& inventoryHash);
 };
 
 // Used for downstream constructors and use cases
 const MasternodeModule& GetMasternodeModule();
 
 // Used in main to manage signals back and forth
-bool MasternodeWinnerIsKnown(const uint256& inventoryHash);
-bool MasternodeIsKnown(const uint256& inventoryHash);
-bool MasternodePingIsKnown(const uint256& inventoryHash);
 bool ShareMasternodeBroadcastWithPeer(CNode* peer,const uint256& inventoryHash);
 bool ShareMasternodePingWithPeer(CNode* peer,const uint256& inventoryHash);
 bool ShareMasternodeWinnerWithPeer(CNode* peer,const uint256& inventoryHash);
