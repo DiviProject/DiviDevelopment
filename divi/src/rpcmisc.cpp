@@ -197,9 +197,10 @@ Value mnsync(const Array& params, bool fHelp, CWallet* pwallet)
             HelpExampleCli("mnsync", "\"status\"") + HelpExampleRpc("mnsync", "\"status\""));
     }
 
+    const MasternodeModule& mnModule = GetMasternodeModule();
     if (strMode == "status") {
         Object obj;
-        const CMasternodeSync& masternodeSynchronization = GetMasternodeModule().getMasternodeSynchronization();
+        const CMasternodeSync& masternodeSynchronization = mnModule.getMasternodeSynchronization();
         obj.push_back(Pair("IsBlockchainSynced", IsBlockchainSynced()));
         obj.push_back(Pair("timestampOfLastMasternodeListUpdate", masternodeSynchronization.timestampOfLastMasternodeListUpdate));
         obj.push_back(Pair("timestampOfLastMasternodeWinnerUpdate", masternodeSynchronization.timestampOfLastMasternodeWinnerUpdate));
@@ -216,7 +217,7 @@ Value mnsync(const Array& params, bool fHelp, CWallet* pwallet)
     }
 
     if (strMode == "reset") {
-        ForceMasternodeResync();
+        mnModule.forceMasternodeResync();
         return "success";
     }
     return "failure";
