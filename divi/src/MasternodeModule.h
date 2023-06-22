@@ -62,9 +62,9 @@ public:
     bool localNodeIsAMasternode() const;
     void designateLocalNodeAsMasternode();
 
+    // Used in main.cpp for managing p2p signals
     bool voteForMasternodePayee(const CBlockIndex* pindex) const;
     void processMasternodeMessages(CNode* pfrom, std::string strCommand, CDataStream& vRecv) const;
-
     bool masternodeWinnerIsKnown(const uint256& inventoryHash);
     bool masternodeIsKnown(const uint256& inventoryHash);
     bool masternodePingIsKnown(const uint256& inventoryHash);
