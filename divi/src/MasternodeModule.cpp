@@ -342,9 +342,9 @@ bool ConfigureMasternodePrivateKey(
     }
 }
 
-bool SetupActiveMasternode(const Settings& settings, std::string& errorMessage)
+bool SetupActiveMasternode(const MasternodeModule& mnModule, const Settings& settings, std::string& errorMessage)
 {
-    CActiveMasternode& activeMasternode = GetMasternodeModule().getActiveMasternode();
+    CActiveMasternode& activeMasternode = mnModule.getActiveMasternode();
     if(!activeMasternode.SetMasternodeAddress(settings.GetArg("-masternodeaddr", "")))
     {
         errorMessage = "Invalid -masternodeaddr address: " + settings.GetArg("-masternodeaddr", "");
@@ -352,12 +352,12 @@ bool SetupActiveMasternode(const Settings& settings, std::string& errorMessage)
     }
     LogPrintf("Masternode address: %s\n", activeMasternode.service);
 
-    return ConfigureMasternodePrivateKey(settings,GetMasternodeModule().getMasternodeConfigurations(),activeMasternode,errorMessage);
+    return ConfigureMasternodePrivateKey(settings, mnModule.getMasternodeConfigurations(),activeMasternode,errorMessage);
 }
 
-bool LoadMasternodeConfigurations(const Settings& settings, std::string& errorMessage)
+bool LoadMasternodeConfigurations(const MasternodeModule& mnModule, const Settings& settings, std::string& errorMessage)
 {
-    CMasternodeConfig& masternodeConfig = GetMasternodeModule().getMasternodeConfigurations();
+    CMasternodeConfig& masternodeConfig = mnModule.getMasternodeConfigurations();
     // parse masternode.conf
     if (!masternodeConfig.read(settings,errorMessage)) {
         errorMessage="Error reading masternode configuration file: "+ errorMessage + "\n";
@@ -369,9 +369,10 @@ bool LoadMasternodeConfigurations(const Settings& settings, std::string& errorMe
 bool InitializeMasternodeIfRequested(const Settings& settings, bool transactionIndexEnabled, std::string& errorMessage)
 {
     bool enableMasternode = settings.ParameterIsSet("-masternode");
-    if(enableMasternode) GetMutableModule().designateLocalNodeAsMasternode();
+    MasternodeModule& mnModule = GetMutableModule();
+    if(enableMasternode) mnModule.designateLocalNodeAsMasternode();
 
-    if(!LoadMasternodeConfigurations(settings,errorMessage))
+    if(!LoadMasternodeConfigurations(mnModule, settings,errorMessage))
     {
         return false;
     }
@@ -384,7 +385,7 @@ bool InitializeMasternodeIfRequested(const Settings& settings, bool transactionI
     else if (enableMasternode)
     {
         LogPrintf("IS MASTER NODE\n");
-        if(!SetupActiveMasternode(settings,errorMessage))
+        if(!SetupActiveMasternode(mnModule, settings,errorMessage))
         {
             return false;
         }
