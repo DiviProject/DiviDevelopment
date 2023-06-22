@@ -135,7 +135,7 @@ void AdvertizeLocal(CNode* pnode)
 //
 
 
-bool static AlreadyHave(const CTxMemPool& mempool, const CInv& inv)
+bool static AlreadyHave(const MasternodeModule& mnModule,const CTxMemPool& mempool, const CInv& inv)
 {
     switch (inv.GetType()) {
     case MSG_TX: {
@@ -582,7 +582,7 @@ bool static ProcessMessage(
             boost::this_thread::interruption_point();
             pfrom->AddInventoryKnown(inv);
 
-            bool fAlreadyHave = AlreadyHave(mempool, inv);
+            bool fAlreadyHave = AlreadyHave(mnModule, mempool, inv);
             LogPrint("net", "got inv: %s  %s peer=%d\n", inv, fAlreadyHave ? "have" : "new", pfrom->id);
 
             if (!fAlreadyHave && !isImportingFiles && !settings.isReindexingBlocks() && inv.GetType() != MSG_BLOCK)
@@ -1231,12 +1231,12 @@ static void CollectBlockDataToRequest(int64_t nNow, CNode* pto, std::vector<CInv
         }
     }
 }
-void CollectNonBlockDataToRequestAndRequestIt(const CTxMemPool& mempool, CNode* pto, int64_t nNow, std::vector<CInv>& vGetData)
+void CollectNonBlockDataToRequestAndRequestIt(const MasternodeModule& mnModule, const CTxMemPool& mempool, CNode* pto, int64_t nNow, std::vector<CInv>& vGetData)
 {
     while (!pto->IsFlaggedForDisconnection() && !pto->mapAskFor.empty() && (*pto->mapAskFor.begin()).first <= nNow)
     {
         const CInv& inv = (*pto->mapAskFor.begin()).second;
-        if (!AlreadyHave(mempool, inv)) {
+        if (!AlreadyHave(mnModule,mempool, inv)) {
             LogPrint("net", "Requesting %s peer=%d\n", inv, pto->id);
             vGetData.push_back(inv);
             if (vGetData.size() >= 1000) {
@@ -1317,6 +1317,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
         {
             BeginSyncingWithPeer(pto);
         }
+        const MasternodeModule& mnModule = GetMasternodeModule();
         CTxMemPool& mempool = GetTransactionMemoryPool();
         if(!settings.isReindexingBlocks()) PeriodicallyRebroadcastMempoolTxs(cs_main, mempool);
         SendInventoryToPeer(pto,fSendTrickle);
@@ -1327,7 +1328,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
             RequestDisconnectionFromNodeIfStalling(nNow,pto);
             if(fFetch) CollectBlockDataToRequest(nNow,pto,vGetData);
         }
-        CollectNonBlockDataToRequestAndRequestIt(mempool, pto,nNow,vGetData);
+        CollectNonBlockDataToRequestAndRequestIt(mnModule, mempool, pto,nNow,vGetData);
     }
     return true;
 }
