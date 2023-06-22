@@ -968,7 +968,7 @@ bool static ProcessMessage(
         }
     } else {
         sporkManager.ProcessSpork(mainCriticalSection, pfrom, strCommand, vRecv);
-        ProcessMasternodeMessages(pfrom,strCommand,vRecv);
+        mnModule.processMasternodeMessages(pfrom,strCommand,vRecv);
     }
 
     return true;

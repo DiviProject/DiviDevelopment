@@ -209,6 +209,20 @@ StoredMasternodeBroadcasts& MasternodeModule::getStoredBroadcasts() const
     return false;
  }
 
+void MasternodeModule::processMasternodeMessages(CNode* pfrom, std::string strCommand, CDataStream& vRecv) const
+{
+    if(IsBlockchainSynced())
+    {
+        CMasternodeMan& mnodeman = getMasternodeManager();
+        CMasternodePayments& masternodePayments = getMasternodePayments();
+        CMasternodeSync& masternodeSync = getMasternodeSynchronization();
+
+        masternodeSync.ProcessSyncUpdate(pfrom,strCommand,vRecv);
+        mnodeman.ProcessMNBroadcastsAndPings(pfrom, strCommand, vRecv);
+        masternodePayments.ProcessMasternodeWinners(pfrom, strCommand, vRecv);
+    }
+}
+
 namespace
 {
 
@@ -434,20 +448,6 @@ bool MasternodeWinnerIsKnown(const uint256& inventoryHash)
         return true;
     }
     return false;
-}
-
-void ProcessMasternodeMessages(CNode* pfrom, std::string strCommand, CDataStream& vRecv)
-{
-    static const auto& mod = GetMasternodeModule();
-    static CMasternodeMan& mnodeman = mod.getMasternodeManager();
-    static CMasternodePayments& masternodePayments = mod.getMasternodePayments();
-    static CMasternodeSync& masternodeSync = mod.getMasternodeSynchronization();
-    if(IsBlockchainSynced())
-    {
-        masternodeSync.ProcessSyncUpdate(pfrom,strCommand,vRecv);
-        mnodeman.ProcessMNBroadcastsAndPings(pfrom, strCommand, vRecv);
-        masternodePayments.ProcessMasternodeWinners(pfrom, strCommand, vRecv);
-    }
 }
 
 void LockUpMasternodeCollateral(const Settings& settings, std::function<void(const COutPoint&)> walletUtxoLockingFunction)
