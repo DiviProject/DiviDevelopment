@@ -223,7 +223,7 @@ void MasternodeModule::processMasternodeMessages(CNode* pfrom, std::string strCo
     }
 }
 
-bool MasternodeModule::masternodeWinnerIsKnown(const uint256& inventoryHash)
+bool MasternodeModule::masternodeWinnerIsKnown(const uint256& inventoryHash) const
 {
     const MasternodePaymentData& paymentData = getMasternodePaymentData();
     CMasternodeSync& masternodeSync = getMasternodeSynchronization();
@@ -234,7 +234,7 @@ bool MasternodeModule::masternodeWinnerIsKnown(const uint256& inventoryHash)
     }
     return false;
 }
-bool MasternodeModule::masternodeIsKnown(const uint256& inventoryHash)
+bool MasternodeModule::masternodeIsKnown(const uint256& inventoryHash) const
 {
     const MasternodeNetworkMessageManager& networkMessageManager = getNetworkMessageManager();
     CMasternodeSync& masternodeSync = getMasternodeSynchronization();
@@ -245,15 +245,15 @@ bool MasternodeModule::masternodeIsKnown(const uint256& inventoryHash)
     }
     return false;
 }
-bool MasternodeModule::masternodePingIsKnown(const uint256& inventoryHash)
+bool MasternodeModule::masternodePingIsKnown(const uint256& inventoryHash) const
 {
     return getNetworkMessageManager().pingIsKnown(inventoryHash);
 }
 
-bool MasternodeModule::shareMasternodeBroadcastWithPeer(CNode* peer,const uint256& inventoryHash)
+bool MasternodeModule::shareMasternodeBroadcastWithPeer(CNode* peer,const uint256& inventoryHash) const
 {
     const MasternodeNetworkMessageManager& networkMessageManager = getNetworkMessageManager();
-    CMasternodeBroadcast& broadcast = networkMessageManager.getKnownBroadcast(inventoryHash);
+    const CMasternodeBroadcast& broadcast = networkMessageManager.getKnownBroadcast(inventoryHash);
     if (broadcast.GetHash() == inventoryHash)
     {
         peer->PushMessage("mnb", broadcast);
@@ -261,7 +261,7 @@ bool MasternodeModule::shareMasternodeBroadcastWithPeer(CNode* peer,const uint25
     }
     return false;
 }
-bool MasternodeModule::shareMasternodePingWithPeer(CNode* peer,const uint256& inventoryHash)
+bool MasternodeModule::shareMasternodePingWithPeer(CNode* peer,const uint256& inventoryHash) const
 {
     const MasternodeNetworkMessageManager& networkMessageManager = getNetworkMessageManager();
     const CMasternodePing& ping = networkMessageManager.getKnownPing(inventoryHash);
@@ -272,7 +272,7 @@ bool MasternodeModule::shareMasternodePingWithPeer(CNode* peer,const uint256& in
     }
     return false;
 }
-bool MasternodeModule::shareMasternodeWinnerWithPeer(CNode* peer,const uint256& inventoryHash)
+bool MasternodeModule::shareMasternodeWinnerWithPeer(CNode* peer,const uint256& inventoryHash) const
 {
     const MasternodePaymentData& paymentData = getMasternodePaymentData();
     const auto* winner = paymentData.getPaymentWinnerForHash(inventoryHash);
