@@ -63,13 +63,13 @@ public:
     void designateLocalNodeAsMasternode();
 
     bool voteForMasternodePayee(const CBlockIndex* pindex) const;
+    void processMasternodeMessages(CNode* pfrom, std::string strCommand, CDataStream& vRecv) const;
 };
 
 // Used for downstream constructors and use cases
 const MasternodeModule& GetMasternodeModule();
 
 // Used in main to manage signals back and forth
-void ProcessMasternodeMessages(CNode* pfrom, std::string strCommand, CDataStream& vRecv);
 bool MasternodeWinnerIsKnown(const uint256& inventoryHash);
 bool MasternodeIsKnown(const uint256& inventoryHash);
 bool MasternodePingIsKnown(const uint256& inventoryHash);
