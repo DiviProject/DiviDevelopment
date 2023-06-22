@@ -65,12 +65,12 @@ public:
     // Used in main.cpp for managing p2p signals
     bool voteForMasternodePayee(const CBlockIndex* pindex) const;
     void processMasternodeMessages(CNode* pfrom, std::string strCommand, CDataStream& vRecv) const;
-    bool masternodeWinnerIsKnown(const uint256& inventoryHash);
-    bool masternodeIsKnown(const uint256& inventoryHash);
-    bool masternodePingIsKnown(const uint256& inventoryHash);
-    bool shareMasternodeBroadcastWithPeer(CNode* peer,const uint256& inventoryHash);
-    bool shareMasternodePingWithPeer(CNode* peer,const uint256& inventoryHash);
-    bool shareMasternodeWinnerWithPeer(CNode* peer,const uint256& inventoryHash);
+    bool masternodeWinnerIsKnown(const uint256& inventoryHash) const;
+    bool masternodeIsKnown(const uint256& inventoryHash) const;
+    bool masternodePingIsKnown(const uint256& inventoryHash) const;
+    bool shareMasternodeBroadcastWithPeer(CNode* peer,const uint256& inventoryHash) const;
+    bool shareMasternodePingWithPeer(CNode* peer,const uint256& inventoryHash) const;
+    bool shareMasternodeWinnerWithPeer(CNode* peer,const uint256& inventoryHash) const;
 };
 
 // Used for downstream constructors and use cases
