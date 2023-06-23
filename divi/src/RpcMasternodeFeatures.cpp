@@ -155,9 +155,10 @@ MasternodeStartResult RelayMasternodeBroadcast(const std::string& hexData, const
     return RelayParsedMasternodeBroadcast(mnb, updatePing);
 }
 
-MasternodeStartResult StartMasternode(const CKeyStore& keyStore, const StoredMasternodeBroadcasts& stored, std::string alias, bool deferRelay)
+MasternodeStartResult StartMasternode(const CKeyStore& keyStore, std::string alias, bool deferRelay)
 {
     const auto& mnModule = GetMasternodeModule();
+    const StoredMasternodeBroadcasts& stored = mnModule.getStoredBroadcasts();
 
     MasternodeStartResult result;
     for(const auto& configEntry : mnModule.getMasternodeConfigurations().getEntries())
