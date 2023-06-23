@@ -1599,12 +1599,12 @@ bool InitializeDivi(boost::thread_group& threadGroup)
 
     // ********************************************************* Step 10: setup ObfuScation
     std::string errorMessage;
-    if(!LoadMasternodeDataFromDisk(uiMessenger,GetDataDir().string()) )
+    const MasternodeModule& mnModule = GetMasternodeModule();
+    if(!LoadMasternodeDataFromDisk(mnModule, uiMessenger,GetDataDir().string()) )
     {
         return false;
     }
     uiInterface.InitMessage(translate("Checking for active masternode..."));
-    const MasternodeModule& mnModule = GetMasternodeModule();
     if(!InitializeMasternodeIfRequested(mnModule, settings, chainstateInstance->BlockTree().GetTxIndexing(), errorMessage))
     {
         return InitError(errorMessage);

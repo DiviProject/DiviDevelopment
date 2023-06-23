@@ -392,10 +392,9 @@ bool InitializeMasternodeIfRequested(const MasternodeModule& mnModule, const Set
     return true;
 }
 
-bool LoadMasternodeDataFromDisk(UIMessenger& uiMessenger,std::string pathToDataDir)
+bool LoadMasternodeDataFromDisk(const MasternodeModule& mod, UIMessenger& uiMessenger,std::string pathToDataDir)
 {
     {
-        const auto& mod = GetMasternodeModule();
         MasternodeNetworkMessageManager& networkMessageManager = mod.getNetworkMessageManager();
         CNetFulfilledRequestManager& networkFulfilledRequestManager = mod.getNetworkFulfilledRequestManager();
         std::string strDBName;
