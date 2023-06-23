@@ -5,7 +5,6 @@
 #include <stdint.h>
 class CBlockIndex;
 class CKeyStore;
-class StoredMasternodeBroadcasts;
 struct MasternodeStartResult
 {
     bool status;
@@ -57,7 +56,7 @@ struct MasternodeCountData
  *  updatePing is true, then the masternode ping is re-signed freshly.  */
 MasternodeStartResult RelayMasternodeBroadcast(const std::string& hexData, const std::string& signature, bool updatePing);
 bool SignMasternodeBroadcast(const CKeyStore& keystore, std::string& hexData);
-MasternodeStartResult StartMasternode(const CKeyStore& keyStore, const StoredMasternodeBroadcasts& stored, std::string alias, bool deferRelay);
+MasternodeStartResult StartMasternode(const CKeyStore& keyStore, std::string alias, bool deferRelay);
 ActiveMasternodeStatus GetActiveMasternodeStatus();
 std::vector<MasternodeListEntry> GetMasternodeList(std::string strFilter, const CBlockIndex* chainTip);
 MasternodeCountData GetMasternodeCounts(const CBlockIndex* chainTip);

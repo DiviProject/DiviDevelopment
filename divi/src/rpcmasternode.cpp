@@ -408,7 +408,7 @@ Value startmasternode(const Array& params, bool fHelp, CWallet* pwallet)
 
     EnsureWalletIsUnlocked(pwallet);
     Object result;
-    MasternodeStartResult mnResult = StartMasternode(*pwallet, GetMasternodeModule().getStoredBroadcasts(), alias, deferRelay);
+    MasternodeStartResult mnResult = StartMasternode(*pwallet, alias, deferRelay);
 
     result.push_back(Pair("status",mnResult.status?"success":"failed"));
     if(!mnResult.status)
