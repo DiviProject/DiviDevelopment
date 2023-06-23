@@ -466,7 +466,7 @@ void LockUpMasternodeCollateral(const Settings& settings, std::function<void(con
 void ThreadMasternodeBackgroundSync(const MasternodeModule* mod)
 {
     if(mod == nullptr) return;
-    RenameThread("divi-obfuscation");
+    RenameThread("divi-masternode-sync");
 
     int64_t nTimeManageStatus = 0;
     int64_t nTimeConnections = 0;
