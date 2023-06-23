@@ -1528,7 +1528,6 @@ bool InitializeDivi(boost::thread_group& threadGroup)
     bool fLoaded = false;
     int64_t nStart;
     while (!fLoaded) {
-        bool fReset = settings.isReindexingBlocks();
         std::string strLoadError;
 
         uiInterface.InitMessage(translate("Loading block index..."));
