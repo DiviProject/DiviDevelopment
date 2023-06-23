@@ -1609,7 +1609,7 @@ bool InitializeDivi(boost::thread_group& threadGroup)
         return InitError(errorMessage);
     }
     LockUpMasternodeCollateral();
-    threadGroup.create_thread(boost::bind(&ThreadMasternodeBackgroundSync));
+    threadGroup.create_thread(boost::bind(&ThreadMasternodeBackgroundSync, &GetMasternodeModule()));
 
     // ********************************************************* Step 11: start node
 
