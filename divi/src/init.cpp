@@ -384,7 +384,7 @@ void PrepareShutdown()
     ShutdownCoinMintingModule();
     InterruptTorControl();
     StopTorControl();
-    SaveMasternodeDataToDisk();
+    SaveMasternodeDataToDisk(GetMasternodeModule());
     FinalizeP2PNetwork();
 
     {
