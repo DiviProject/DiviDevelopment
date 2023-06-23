@@ -288,6 +288,24 @@ void MasternodeModule::forceMasternodeResync() const
     getMasternodeSynchronization().Reset();
 }
 
+std::vector<COutPoint> MasternodeModule::getMasternodeAllocationUtxos() const
+{
+    CMasternodeConfig& masternodeConfig = getMasternodeConfigurations();
+    uint256 mnTxHash;
+
+    const std::vector<CMasternodeConfig::CMasternodeEntry>& masternodeConfigurations = masternodeConfig.getEntries();
+    std::vector<COutPoint> masternodeAllocationUtxos;
+    masternodeAllocationUtxos.reserve(masternodeConfigurations.size());
+
+    BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfigurations)
+    {
+        LogPrintf("  %s %s\n", mne.getTxHash(), mne.getOutputIndex());
+        mnTxHash.SetHex(mne.getTxHash());
+        masternodeAllocationUtxos.emplace_back(mnTxHash, boost::lexical_cast<unsigned int>(mne.getOutputIndex()));
+    }
+    return masternodeAllocationUtxos;
+}
+
 namespace
 {
 
@@ -442,23 +460,6 @@ void SaveMasternodeDataToDisk()
         flatdb4.Dump(networkFulfilledRequestManager);
     }
 }
-
-void LockUpMasternodeCollateral(const MasternodeModule& mnModule, const Settings& settings, std::function<void(const COutPoint&)> walletUtxoLockingFunction)
-{
-    if(settings.GetBoolArg("-mnconflock", true))
-    {
-        CMasternodeConfig& masternodeConfig = mnModule.getMasternodeConfigurations();
-        uint256 mnTxHash;
-        BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries())
-        {
-            LogPrintf("  %s %s\n", mne.getTxHash(), mne.getOutputIndex());
-            mnTxHash.SetHex(mne.getTxHash());
-            COutPoint outpoint(mnTxHash, boost::lexical_cast<unsigned int>(mne.getOutputIndex()));
-            walletUtxoLockingFunction(outpoint);
-        }
-    }
-}
-
 
 //TODO: Rename/move to core
 void ThreadMasternodeBackgroundSync(const MasternodeModule* mod)
