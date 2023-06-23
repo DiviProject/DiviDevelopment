@@ -1254,7 +1254,7 @@ void ScanBlockchainForWalletUpdates()
     LogPrintf(" rescan      %15dms\n", GetTimeMillis() - nStart);
 }
 
-void LockUpMasternodeCollateral()
+void LockUpMasternodeCollateral(const MasternodeModule& mnModule)
 {
     if (GetWallet()) {
         LogPrintf("Locking Masternodes:\n");
@@ -1262,6 +1262,7 @@ void LockUpMasternodeCollateral()
 
         CWallet& walletReference = *GetWallet();
         LockUpMasternodeCollateral(
+            mnModule,
             settings,
             [&walletReference](const COutPoint& outpoint)
             {
@@ -1609,7 +1610,7 @@ bool InitializeDivi(boost::thread_group& threadGroup)
     {
         return InitError(errorMessage);
     }
-    LockUpMasternodeCollateral();
+    LockUpMasternodeCollateral(mnModule);
     threadGroup.create_thread(boost::bind(&ThreadMasternodeBackgroundSync, &mnModule));
 
     // ********************************************************* Step 11: start node
