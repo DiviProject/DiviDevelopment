@@ -463,18 +463,17 @@ void LockUpMasternodeCollateral(const Settings& settings, std::function<void(con
 
 
 //TODO: Rename/move to core
-void ThreadMasternodeBackgroundSync()
+void ThreadMasternodeBackgroundSync(const MasternodeModule* mod)
 {
-
+    if(mod == nullptr) return;
     RenameThread("divi-obfuscation");
 
     int64_t nTimeManageStatus = 0;
     int64_t nTimeConnections = 0;
 
-    const auto& mod = GetMasternodeModule();
-    CMasternodeSync& masternodeSync = mod.getMasternodeSynchronization();
-    CMasternodeMan& mnodeman = mod.getMasternodeManager();
-    CMasternodePayments& masternodePayments = mod.getMasternodePayments();
+    CMasternodeSync& masternodeSync = mod->getMasternodeSynchronization();
+    CMasternodeMan& mnodeman = mod->getMasternodeManager();
+    CMasternodePayments& masternodePayments = mod->getMasternodePayments();
     while (true) {
         int64_t now;
         {
@@ -503,7 +502,7 @@ void ThreadMasternodeBackgroundSync()
         // start right after sync is considered to be done
         if (now >= nTimeManageStatus + MASTERNODE_PING_SECONDS) {
             nTimeManageStatus = now;
-            if(mod.localNodeIsAMasternode()) mnodeman.ManageLocalMasternode();
+            if(mod->localNodeIsAMasternode()) mnodeman.ManageLocalMasternode();
         }
 
         if (now >= nTimeConnections + 60) {

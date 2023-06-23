@@ -80,7 +80,7 @@ public:
 const MasternodeModule& GetMasternodeModule();
 
 // Used for initialization
-void ThreadMasternodeBackgroundSync();
+void ThreadMasternodeBackgroundSync(const MasternodeModule* mod);
 void LockUpMasternodeCollateral(const Settings& settings, std::function<void(const COutPoint&)> walletUtxoLockingFunction);
 bool LoadMasternodeDataFromDisk(UIMessenger& uiMessenger,std::string pathToDataDir);
 void SaveMasternodeDataToDisk();
