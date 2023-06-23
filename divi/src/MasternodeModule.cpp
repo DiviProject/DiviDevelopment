@@ -137,7 +137,7 @@ StoredMasternodeBroadcasts& MasternodeModule::getStoredBroadcasts() const
  {
      return fMasterNode_;
  }
- void MasternodeModule::designateLocalNodeAsMasternode()
+ void MasternodeModule::designateLocalNodeAsMasternode() const
  {
      fMasterNode_ = true;
  }
@@ -366,10 +366,9 @@ bool LoadMasternodeConfigurations(const MasternodeModule& mnModule, const Settin
     return true;
 }
 
-bool InitializeMasternodeIfRequested(const Settings& settings, bool transactionIndexEnabled, std::string& errorMessage)
+bool InitializeMasternodeIfRequested(const MasternodeModule& mnModule, const Settings& settings, bool transactionIndexEnabled, std::string& errorMessage)
 {
     bool enableMasternode = settings.ParameterIsSet("-masternode");
-    MasternodeModule& mnModule = GetMutableModule();
     if(enableMasternode) mnModule.designateLocalNodeAsMasternode();
 
     if(!LoadMasternodeConfigurations(mnModule, settings,errorMessage))

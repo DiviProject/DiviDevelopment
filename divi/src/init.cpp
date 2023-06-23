@@ -1604,12 +1604,13 @@ bool InitializeDivi(boost::thread_group& threadGroup)
         return false;
     }
     uiInterface.InitMessage(translate("Checking for active masternode..."));
-    if(!InitializeMasternodeIfRequested(settings, chainstateInstance->BlockTree().GetTxIndexing(), errorMessage))
+    const MasternodeModule& mnModule = GetMasternodeModule();
+    if(!InitializeMasternodeIfRequested(mnModule, settings, chainstateInstance->BlockTree().GetTxIndexing(), errorMessage))
     {
         return InitError(errorMessage);
     }
     LockUpMasternodeCollateral();
-    threadGroup.create_thread(boost::bind(&ThreadMasternodeBackgroundSync, &GetMasternodeModule()));
+    threadGroup.create_thread(boost::bind(&ThreadMasternodeBackgroundSync, &mnModule));
 
     // ********************************************************* Step 11: start node
 
