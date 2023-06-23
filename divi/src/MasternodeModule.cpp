@@ -443,11 +443,11 @@ void SaveMasternodeDataToDisk()
     }
 }
 
-void LockUpMasternodeCollateral(const Settings& settings, std::function<void(const COutPoint&)> walletUtxoLockingFunction)
+void LockUpMasternodeCollateral(const MasternodeModule& mnModule, const Settings& settings, std::function<void(const COutPoint&)> walletUtxoLockingFunction)
 {
     if(settings.GetBoolArg("-mnconflock", true))
     {
-        CMasternodeConfig& masternodeConfig = GetMasternodeModule().getMasternodeConfigurations();
+        CMasternodeConfig& masternodeConfig = mnModule.getMasternodeConfigurations();
         uint256 mnTxHash;
         BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries())
         {
