@@ -498,8 +498,6 @@ CNode* FindNode(const CService& addr)
 NodeRef ConnectNode(CAddress addrConnect, const char* pszDest = NULL, const bool oneShot = false)
 {
     if (pszDest == NULL) {
-        // we clean masternode connections in CMasternodeMan::ProcessMasternodeConnections()
-        // so should be safe to skip this and connect to local Hot MN on CActiveMasternode::ManageStatus()
         if (IsLocal(addrConnect))
             return NodeReferenceFactory::makeUniqueNodeReference(nullptr);
 
