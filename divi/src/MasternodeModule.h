@@ -83,6 +83,6 @@ const MasternodeModule& GetMasternodeModule();
 // Used for initialization
 void ThreadMasternodeBackgroundSync(const MasternodeModule* mod);
 bool LoadMasternodeDataFromDisk(const MasternodeModule& mod, UIMessenger& uiMessenger,std::string pathToDataDir);
-void SaveMasternodeDataToDisk();
+void SaveMasternodeDataToDisk(const MasternodeModule& mod);
 bool InitializeMasternodeIfRequested(const MasternodeModule& mnModule, const Settings& settings, bool transactionIndexEnabled, std::string& errorMessage);
 #endif //MASTERNODE_MODULE_H

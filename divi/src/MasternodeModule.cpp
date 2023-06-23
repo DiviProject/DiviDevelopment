@@ -445,10 +445,9 @@ bool LoadMasternodeDataFromDisk(const MasternodeModule& mod, UIMessenger& uiMess
     }
     return true;
 }
-void SaveMasternodeDataToDisk()
+void SaveMasternodeDataToDisk(const MasternodeModule& mod)
 {
     {
-        const auto& mod = GetMasternodeModule();
         MasternodeNetworkMessageManager& networkMessageManager = mod.getNetworkMessageManager();
         MasternodePaymentData& masternodePaymentData = mod.getMasternodePaymentData();
         CNetFulfilledRequestManager& networkFulfilledRequestManager = mod.getNetworkFulfilledRequestManager();
