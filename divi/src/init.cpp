@@ -1256,18 +1256,17 @@ void ScanBlockchainForWalletUpdates()
 
 void LockUpMasternodeCollateral(const MasternodeModule& mnModule)
 {
-    if (GetWallet()) {
+    if(!settings.GetBoolArg("-mnconflock", true)) return;
+    CWallet* walletReference = GetWallet();
+    if (walletReference) {
         LogPrintf("Locking Masternodes:\n");
-        LOCK(GetWallet()->getWalletCriticalSection());
+        const auto masternodeAllocationUtxos = mnModule.getMasternodeAllocationUtxos();
+        LOCK(walletReference->getWalletCriticalSection());
 
-        CWallet& walletReference = *GetWallet();
-        LockUpMasternodeCollateral(
-            mnModule,
-            settings,
-            [&walletReference](const COutPoint& outpoint)
-            {
-                walletReference.LockCoin(outpoint);
-            });
+        for(COutPoint masternodeAllocation: masternodeAllocationUtxos)
+        {
+            walletReference->LockCoin(masternodeAllocation);
+        }
     }
 }
 
