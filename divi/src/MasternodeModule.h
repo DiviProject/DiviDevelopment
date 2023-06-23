@@ -32,7 +32,7 @@ class MasternodeModule
 {
 private:
     mutable int64_t lastBlockVotedOn;
-    bool fMasterNode_;
+    mutable bool fMasterNode_;
     std::unique_ptr<CNetFulfilledRequestManager> networkFulfilledRequestManager_;
     std::unique_ptr<MasternodeNetworkMessageManager> networkMessageManager_;
     std::unique_ptr<MasternodePaymentData> masternodePaymentData_;
@@ -60,7 +60,7 @@ public:
     CMasternodeSync& getMasternodeSynchronization() const;
     StoredMasternodeBroadcasts& getStoredBroadcasts() const;
     bool localNodeIsAMasternode() const;
-    void designateLocalNodeAsMasternode();
+    void designateLocalNodeAsMasternode() const;
 
     // Used in main.cpp for managing p2p signals
     bool voteForMasternodePayee(const CBlockIndex* pindex) const;
@@ -84,5 +84,5 @@ void ThreadMasternodeBackgroundSync(const MasternodeModule* mod);
 void LockUpMasternodeCollateral(const Settings& settings, std::function<void(const COutPoint&)> walletUtxoLockingFunction);
 bool LoadMasternodeDataFromDisk(UIMessenger& uiMessenger,std::string pathToDataDir);
 void SaveMasternodeDataToDisk();
-bool InitializeMasternodeIfRequested(const Settings& settings, bool transactionIndexEnabled, std::string& errorMessage);
+bool InitializeMasternodeIfRequested(const MasternodeModule& mnModule, const Settings& settings, bool transactionIndexEnabled, std::string& errorMessage);
 #endif //MASTERNODE_MODULE_H
