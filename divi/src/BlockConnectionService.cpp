@@ -92,7 +92,7 @@ bool CheckMintTotalsAndBlockPayees(
 
     if (!incentives.HasValidPayees(coinbaseTx,pindex)) {
         mapRejectedBlocks.insert(std::make_pair(block.GetHash(), GetTime()));
-        return state.DoS(0, error("%s: couldn't find masternode or superblock payments",__func__),
+        return state.DoS(0, error("%s: couldn't find superblock payments",__func__),
                          REJECT_INVALID, "bad-cb-payee");
     }
     return true;

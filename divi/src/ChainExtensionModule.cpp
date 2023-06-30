@@ -15,7 +15,6 @@
 ChainExtensionModule::ChainExtensionModule(
     ChainstateManager& chainstateManager,
     CTxMemPool& mempool,
-    const MasternodeModule& masternodeModule,
     MainNotificationSignals& mainNotificationSignals,
     CCriticalSection& mainCriticalSection,
     const Settings& settings,
@@ -35,7 +34,6 @@ ChainExtensionModule::ChainExtensionModule(
     , incentives_(
         new BlockIncentivesPopulator(
             chainParameters,
-            masternodeModule,
             blockSubsidies_->superblockHeightValidator(),
             blockSubsidies_->blockSubsidiesProvider() ))
     , proofOfStakeModule_(
@@ -92,8 +90,7 @@ ChainExtensionModule::ChainExtensionModule(
         new BlockSubmitter(
             *blockValidator_,
             mainCriticalSection,
-            chainstateManager_,
-            masternodeModule))
+            chainstateManager_))
 {
 }
 

@@ -15,8 +15,6 @@
 #include "protocol.h"
 #include "uint256.h"
 
-#include "masternode-tier.h"
-
 #include <map>
 #include <vector>
 class Settings;
@@ -38,7 +36,6 @@ struct CDNSSeedData {
 class CChainParams
 {
 public:
-    using MNCollateralMapType = std::map<MasternodeTier, CAmount>;
 
     enum Base58Type {
         PUBKEY_ADDRESS,
@@ -98,11 +95,6 @@ public:
     int GetTreasuryPaymentsStartBlock() const { return nTreasuryPaymentsStartBlock; }
     int GetTreasuryPaymentsCycle() const { return nTreasuryPaymentsCycle; }
     unsigned GetMinCoinAgeForStaking () const { return nMinCoinAgeForStaking; }
-    const MNCollateralMapType& MasternodeCollateralMap() const
-    {
-        assert(mnCollateralMap);
-        return *mnCollateralMap;
-    }
 
     /** Height or Time Based Activations **/
     int LAST_POW_BLOCK() const { return nLastPOWBlock; }
@@ -127,7 +119,6 @@ protected:
     int64_t nTargetSpacing;
     int nLastPOWBlock;
     unsigned nMinCoinAgeForStaking;
-    const MNCollateralMapType* mnCollateralMap;
     int nMasternodeCountDrift;
     int nMaturity;
     CAmount nMaxMoneyOut;

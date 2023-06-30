@@ -133,25 +133,6 @@ const CCheckpointData dataRegtest = {
     0,
     100};
 
-const CChainParams::MNCollateralMapType mnCollateralsMainnet = {
-    {MasternodeTier::COPPER,    100000 * COIN},
-    {MasternodeTier::SILVER,    300000 * COIN},
-    {MasternodeTier::GOLD,     1000000 * COIN},
-    {MasternodeTier::PLATINUM, 3000000 * COIN},
-    {MasternodeTier::DIAMOND, 10000000 * COIN},
-};
-
-/* Masternode collaterals are significantly cheaper on regtest, so
-   that it is easy to generate them in tests without having to
-   mine hundreds of blocks.  */
-const CChainParams::MNCollateralMapType mnCollateralsRegtest = {
-    {MasternodeTier::COPPER,    100 * COIN},
-    {MasternodeTier::SILVER,    300 * COIN},
-    {MasternodeTier::GOLD,     1000 * COIN},
-    {MasternodeTier::PLATINUM, 3000 * COIN},
-    {MasternodeTier::DIAMOND, 10000 * COIN},
-};
-
 } // anonymous namespace
 
 class CMainParams : public CChainParams
@@ -193,7 +174,6 @@ public:
         nTreasuryPaymentsStartBlock = 101;
         nTreasuryPaymentsCycle = 60 * 24 * 7 + 1;
         nMinCoinAgeForStaking = 60 * 60;
-        mnCollateralMap = &mnCollateralsMainnet;
 
         /**
         * Build the genesis block. Note that the output of the genesis coinbase cannot
@@ -497,8 +477,6 @@ public:
            around with mocktimes of perhaps multiple nodes in sync).  */
         nMinCoinAgeForStaking = 0;
 
-        mnCollateralMap = &mnCollateralsRegtest;
-
         nExtCoinType = 1;
 
         hashGenesisBlock = genesis.GetHash();
@@ -544,7 +522,6 @@ public:
         fAllowMinDifficultyBlocks = false;
         fDifficultyRetargeting = true;
         fMineBlocksOnDemand = true;
-        mnCollateralMap = &mnCollateralsMainnet;
     }
 
     const CCheckpointData& Checkpoints() const

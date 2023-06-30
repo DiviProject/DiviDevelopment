@@ -14,7 +14,6 @@ class CChain;
 class CChainParams;
 class I_PeerBlockNotifyService;
 class CNode;
-class CMasternodeSync;
 class CReserveKey;
 typedef std::map<unsigned int, unsigned int> HashedBlockMap;
 class CBlock;
@@ -33,7 +32,6 @@ class CoinMinter final: public I_CoinMinter
     const CChainParams& chainParameters_;
     const I_PeerBlockNotifyService& peerNotifier_;
     const I_BlockSubmitter& blockSubmitter_;
-    const CMasternodeSync& masternodeSync_;
 
     I_BlockFactory& blockFactory_;
     I_StakingWallet& wallet_;
@@ -58,7 +56,6 @@ public:
         const CChainParams& chainParameters,
         const I_PeerBlockNotifyService& peers,
         const I_BlockSubmitter& blockSubmitter,
-        const CMasternodeSync& masternodeSynchronization,
         I_BlockFactory& blockFactory,
         I_StakingWallet& wallet,
         HashedBlockMap& mapHashedBlocks);

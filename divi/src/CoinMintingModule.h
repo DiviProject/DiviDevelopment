@@ -16,7 +16,6 @@ class I_StakingWallet;
 class I_BlockProofProver;
 
 class CChainParams;
-class CMasternodeSync;
 class CTxMemPool;
 class CCriticalSection;
 class CSporkManager;
@@ -37,7 +36,6 @@ public:
         const Settings& settings,
         const CChainParams& chainParameters,
         const I_BlockProofProver& blockProofProver,
-        const CMasternodeSync& masternodeSynchronization,
         const CFeeRate& relayTxFeeCalculator,
         const I_PeerBlockNotifyService& peers,
         const I_BlockSubmitter& blockSubmitter,

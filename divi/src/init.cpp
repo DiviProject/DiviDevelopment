@@ -39,7 +39,6 @@
 #include "NotificationInterface.h"
 #include "FeeAndPriorityCalculator.h"
 #include <Settings.h>
-#include <MasternodeModule.h>
 #include <functional>
 #include <uiMessenger.h>
 #include <timeIntervalConstants.h>
@@ -175,14 +174,13 @@ bool HasRecentlyAttemptedToGenerateProofOfStake()
 }
 
 std::unique_ptr<ChainExtensionModule> chainExtensionModule;
-void InitializeChainExtensionModule(const MasternodeModule& masternodeModule)
+void InitializeChainExtensionModule()
 {
     assert(chainExtensionModule == nullptr);
     chainExtensionModule.reset(
         new ChainExtensionModule(
             ChainstateManager::Get(),
             GetTransactionMemoryPool(),
-            masternodeModule,
             GetMainNotificationInterface(),
             cs_main,
             settings,
@@ -256,7 +254,6 @@ void StartCoinMintingModule(boost::thread_group& threadGroup, I_StakingWallet& s
         settings,
         Params(),
         chainExtensionModule->getBlockProofProver(stakingWallet),
-        GetMasternodeModule().getMasternodeSynchronization(),
         feeAndPriorityCalculator.getMinimumRelayFeeRate(),
         GetPeerBlockNotifyService(),
         chainExtensionModule->getBlockSubmitter(),
@@ -384,7 +381,6 @@ void PrepareShutdown()
     ShutdownCoinMintingModule();
     InterruptTorControl();
     StopTorControl();
-    SaveMasternodeDataToDisk(GetMasternodeModule());
     FinalizeP2PNetwork();
 
     {
@@ -1254,22 +1250,6 @@ void ScanBlockchainForWalletUpdates()
     LogPrintf(" rescan      %15dms\n", GetTimeMillis() - nStart);
 }
 
-void LockUpMasternodeCollateral(const MasternodeModule& mnModule)
-{
-    if(!settings.GetBoolArg("-mnconflock", true)) return;
-    CWallet* walletReference = GetWallet();
-    if (walletReference) {
-        LogPrintf("Locking Masternodes:\n");
-        const auto masternodeAllocationUtxos = mnModule.getMasternodeAllocationUtxos();
-        LOCK(walletReference->getWalletCriticalSection());
-
-        for(COutPoint masternodeAllocation: masternodeAllocationUtxos)
-        {
-            walletReference->LockCoin(masternodeAllocation);
-        }
-    }
-}
-
 void SubmitUnconfirmedWalletTransactionsToMempool(const CWallet& wallet)
 {
     LOCK2(cs_main, wallet.getWalletCriticalSection());
@@ -1341,7 +1321,7 @@ void InitializeMainBlockchainModules()
             unitTestMode?     false : settings.isReindexingBlocks()));
     sporkManagerInstance.reset(new CSporkManager(*chainstateInstance));
     InitializeMultiWalletModule();
-    InitializeChainExtensionModule(GetMasternodeModule());
+    InitializeChainExtensionModule();
 }
 void FinalizeMainBlockchainModules()
 {
@@ -1595,21 +1575,6 @@ bool InitializeDivi(boost::thread_group& threadGroup)
         while (!fRequestShutdown && chainActive.Tip() == NULL)
             MilliSleep(10);
     }
-
-    // ********************************************************* Step 10: setup ObfuScation
-    std::string errorMessage;
-    const MasternodeModule& mnModule = GetMasternodeModule();
-    if(!LoadMasternodeDataFromDisk(mnModule, uiMessenger,GetDataDir().string()) )
-    {
-        return false;
-    }
-    uiInterface.InitMessage(translate("Checking for active masternode..."));
-    if(!InitializeMasternodeIfRequested(mnModule, settings, chainstateInstance->BlockTree().GetTxIndexing(), errorMessage))
-    {
-        return InitError(errorMessage);
-    }
-    LockUpMasternodeCollateral(mnModule);
-    threadGroup.create_thread(boost::bind(&ThreadMasternodeBackgroundSync, &mnModule));
 
     // ********************************************************* Step 11: start node
 

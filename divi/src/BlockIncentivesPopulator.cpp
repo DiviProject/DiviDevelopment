@@ -7,7 +7,6 @@
 #include <chain.h>
 #include <BlockRewards.h>
 
-#include <masternode-payments.h>
 #include <I_SuperblockHeightValidator.h>
 #include <I_BlockSubsidyProvider.h>
 #include <script/standard.h>
@@ -15,10 +14,6 @@
 
 #include <Settings.h>
 
-#include <masternode.h>
-#include <masternode-sync.h>
-#include <MasternodeHelpers.h>
-#include <MasternodeModule.h>
 #include <ForkActivation.h>
 
 extern Settings& settings;
@@ -98,12 +93,9 @@ bool IsValidTreasuryPayment(const CChainParams& chainParameters, const CBlockRew
 
 BlockIncentivesPopulator::BlockIncentivesPopulator(
     const CChainParams& chainParameters,
-    const MasternodeModule& masternodeModule,
     const I_SuperblockHeightValidator& heightValidator,
     const I_BlockSubsidyProvider& blockSubsidies
     ): chainParameters_(chainParameters)
-    , masternodeSync_(masternodeModule.getMasternodeSynchronization())
-    , masternodePayments_(masternodeModule.getMasternodePayments())
     , heightValidator_(heightValidator)
     , blockSubsidies_(blockSubsidies)
     , treasuryPaymentAddress_(
@@ -147,10 +139,6 @@ void BlockIncentivesPopulator::FillBlockPayee(CMutableTransaction& txNew, const 
     else if(heightValidator_.IsValidLotteryBlockHeight(chainTip->nHeight + 1)) {
         FillLotteryPayment(txNew, payments, chainTip);
     }
-    else if(!ActivationState(chainTip).IsActive(Fork::DeprecateMasternodes))
-    {
-        masternodePayments_.FillBlockPayee(chainTip,txNew, payments);
-    }
 }
 
 bool BlockIncentivesPopulator::IsBlockValueValid(const CBlockRewards &nExpectedValue, CAmount nMinted, int nHeight) const
@@ -185,45 +173,8 @@ bool BlockIncentivesPopulator::HasValidPayees(const CTransaction &txNew, const C
         const CBlockRewards rewards = blockSubsidies_.GetBlockSubsidity(blockHeight);
         return IsValidLotteryPayment(rewards,txNew, pindex->pprev->vLotteryWinnersCoinstakes.getLotteryCoinstakes());
     }
-    else if(!ActivationState(pindex->pprev).IsActive(Fork::DeprecateMasternodes))
-    {
-        return HasValidMasternodePayee(txNew,pindex);
-    }
     else
     {
         return true;
     }
-}
-
-
-bool BlockIncentivesPopulator::HasValidMasternodePayee(const CTransaction &txNew, const CBlockIndex* pindex) const
-{
-    if (!masternodeSync_.IsSynced()) { //there is no budget data to use to check anything -- find the longest chain
-        LogPrintf("%s : Client not synced, skipping block payee checks\n", __func__);
-        return true;
-    }
-
-    /* For the first 100 blocks after genesis, there is no scoring hash (as
-       the block used for it would be before genesis).  In this case, just
-       ignore any payment checks.  On mainnet, those blocks are long enshrined
-       into blockchain history anyway.  On regtest, this allows proper
-       functioning.  */
-    if (pindex->nHeight <= 100) {
-        LogPrint("masternode", "%s : not checking payments for height %d\n",
-                 __func__, pindex->nHeight);
-        return true;
-    }
-
-    //check for masternode payee
-    uint256 scoringBlockHash;
-    if (!GetBlockHashForScoring(scoringBlockHash, pindex, 0)) {
-        LogPrint("masternode", "%s : failed to get scoring hash for height %d\n",
-                 __func__, pindex->nHeight);
-        return false;
-    }
-    if (masternodePayments_.IsTransactionValid(blockSubsidies_,txNew, scoringBlockHash) || settings.GetBoolArg("-override_mnpayee",false))
-        return true;
-    LogPrintf("%s : Invalid mn payment detected %s\n", __func__, txNew);
-
-    return false;
 }

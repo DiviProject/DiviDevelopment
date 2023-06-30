@@ -5,7 +5,7 @@
 DEFINES += ENABLE_WALLET
 
 TEMPLATE = app
-TARGET = 
+TARGET =
 DEPENDPATH += . \
               src \
               src/compat \
@@ -408,7 +408,6 @@ SOURCES += src/activemasternode.cpp \
            src/rpcclient.cpp \
            src/rpcdump.cpp \
            src/rpcmasternode-budget.cpp \
-           src/rpcmasternode.cpp \
            src/rpcmining.cpp \
            src/rpcmisc.cpp \
            src/rpcnet.cpp \

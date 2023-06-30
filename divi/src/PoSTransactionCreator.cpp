@@ -2,7 +2,6 @@
 
 #include <I_StakingCoinSelector.h>
 #include <I_ProofOfStakeGenerator.h>
-#include <masternode-payments.h>
 #include <script/sign.h>
 #include <utilmoneystr.h>
 #include <I_BlockIncentivesPopulator.h>

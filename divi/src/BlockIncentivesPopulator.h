@@ -9,19 +9,14 @@ class CBlockRewards;
 class CBlockIndex;
 class CChainParams;
 class CChain;
-class CMasternodePayments;
 class I_SuperblockHeightValidator;
 class I_BlockSubsidyProvider;
 class CTransaction;
-class CMasternodeSync;
-class MasternodeModule;
 
 class BlockIncentivesPopulator : public I_BlockIncentivesPopulator
 {
 private:
     const CChainParams& chainParameters_;
-    const CMasternodeSync& masternodeSync_;
-    CMasternodePayments& masternodePayments_;
     const I_SuperblockHeightValidator& heightValidator_;
     const I_BlockSubsidyProvider& blockSubsidies_;
     const std::string treasuryPaymentAddress_;
@@ -30,12 +25,10 @@ private:
 private:
     void FillTreasuryPayment(CMutableTransaction &tx, int nHeight) const;
     void FillLotteryPayment(CMutableTransaction &tx, const CBlockRewards &rewards, const CBlockIndex *currentBlockIndex) const;
-    bool HasValidMasternodePayee(const CTransaction &txNew, const CBlockIndex* pindex) const;
 
 public:
     BlockIncentivesPopulator(
         const CChainParams& chainParameters,
-        const MasternodeModule& masternodeModule,
         const I_SuperblockHeightValidator& heightValidator,
         const I_BlockSubsidyProvider& blockSubsidies);
 

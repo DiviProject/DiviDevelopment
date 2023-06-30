@@ -55,7 +55,6 @@ BITCOIN_TESTS =\
   test/MockPoSStakeModifierService.h \
   test/MockVaultManagerDatabase.h \
   test/Monthlywalletbackupcreator_tests.cpp \
-  test/ActiveMasternode_tests.cpp \
   test/FilteredBoostFileSystem_tests.cpp \
   test/mruset_tests.cpp \
   test/multisig_tests.cpp \

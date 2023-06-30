@@ -25,7 +25,6 @@
 #include <I_BlockSubmitter.h>
 #include <defaultValues.h>
 #include <init.h>
-#include <MasternodeModule.h>
 #include <MempoolConsensus.h>
 #include <merkleblock.h>
 #include <net.h>
@@ -135,7 +134,7 @@ void AdvertizeLocal(CNode* pnode)
 //
 
 
-bool static AlreadyHave(const MasternodeModule& mnModule,const CTxMemPool& mempool, const CInv& inv)
+bool static AlreadyHave(const CTxMemPool& mempool, const CInv& inv)
 {
     switch (inv.GetType()) {
     case MSG_TX: {
@@ -154,18 +153,12 @@ bool static AlreadyHave(const MasternodeModule& mnModule,const CTxMemPool& mempo
         return false;
     case MSG_SPORK:
         return SporkDataIsKnown(inv.GetHash());
-    case MSG_MASTERNODE_WINNER:
-        return mnModule.masternodeWinnerIsKnown(inv.GetHash());
-    case MSG_MASTERNODE_ANNOUNCE:
-        return mnModule.masternodeIsKnown(inv.GetHash());
-    case MSG_MASTERNODE_PING:
-        return mnModule.masternodePingIsKnown(inv.GetHash());
     }
     // Don't know what it is, just say we already got one
     return true;
 }
 
-static bool PushKnownInventory(const MasternodeModule& mnModule, const CTxMemPool& mempool, CNode* pfrom, const CInv& inv)
+static bool PushKnownInventory(const CTxMemPool& mempool, CNode* pfrom, const CInv& inv)
 {
     bool pushed = false;
     InventoryType type = static_cast<InventoryType>(inv.GetType());
@@ -186,15 +179,6 @@ static bool PushKnownInventory(const MasternodeModule& mnModule, const CTxMemPoo
         break;
     case InventoryType::MSG_SPORK:
         pushed = ShareSporkDataWithPeer(pfrom,inv.GetHash());
-        break;
-    case InventoryType::MSG_MASTERNODE_WINNER:
-        pushed = mnModule.shareMasternodeWinnerWithPeer(pfrom,inv.GetHash());
-        break;
-    case InventoryType::MSG_MASTERNODE_ANNOUNCE:
-        pushed = mnModule.shareMasternodeBroadcastWithPeer(pfrom,inv.GetHash());
-        break;
-    case InventoryType::MSG_MASTERNODE_PING:
-        pushed = mnModule.shareMasternodePingWithPeer(pfrom,inv.GetHash());
         break;
     case InventoryType::MSG_FILTERED_BLOCK:
     case InventoryType::MSG_TXLOCK_REQUEST:
@@ -280,7 +264,7 @@ static void PushCorrespondingBlockToPeer(CNode* pfrom, const CBlockIndex* blockT
     }
 }
 
-void static ProcessGetData(const MasternodeModule& mnModule, const CTxMemPool& mempool, CCriticalSection& mainCriticalSection, CNode* pfrom, std::deque<CInv>& requestsForData)
+void static ProcessGetData(const CTxMemPool& mempool, CCriticalSection& mainCriticalSection, CNode* pfrom, std::deque<CInv>& requestsForData)
 {
     const ChainstateManager::Reference chainstate;
 
@@ -321,7 +305,7 @@ void static ProcessGetData(const MasternodeModule& mnModule, const CTxMemPool& m
             else if (inv.IsKnownType())
             {
                 // Send stream from relay memory
-                if(!RepeatRelayedInventory(pfrom,inv) && !PushKnownInventory(mnModule, mempool, pfrom,inv))
+                if(!RepeatRelayedInventory(pfrom,inv) && !PushKnownInventory(mempool, pfrom,inv))
                 {
                     vNotFound.push_back(inv);
                 }
@@ -348,9 +332,8 @@ void static ProcessGetData(const MasternodeModule& mnModule, const CTxMemPool& m
 
 void RespondToRequestForDataFrom(CNode* pfrom)
 {
-    const MasternodeModule& mnModule = GetMasternodeModule();
     const CTxMemPool& mempool = GetTransactionMemoryPool();
-    ProcessGetData(mnModule,mempool, cs_main, pfrom, pfrom->GetRequestForDataQueue());
+    ProcessGetData(mempool, cs_main, pfrom, pfrom->GetRequestForDataQueue());
 }
 
 constexpr const char* NetworkMessageType_VERSION = "version";
@@ -469,7 +452,6 @@ static bool SetPeerVersionAndServices(CCriticalSection& mainCriticalSection, CNo
 }
 
 bool static ProcessMessage(
-    const MasternodeModule& mnModule,
     CTxMemPool& mempool,
     CCriticalSection& mainCriticalSection,
     CNode* pfrom,
@@ -584,7 +566,7 @@ bool static ProcessMessage(
             boost::this_thread::interruption_point();
             pfrom->AddInventoryKnown(inv);
 
-            bool fAlreadyHave = AlreadyHave(mnModule, mempool, inv);
+            bool fAlreadyHave = AlreadyHave(mempool, inv);
             LogPrint("net", "got inv: %s  %s peer=%d\n", inv, fAlreadyHave ? "have" : "new", pfrom->id);
 
             if (!fAlreadyHave && !isImportingFiles && !settings.isReindexingBlocks() && inv.GetType() != MSG_BLOCK)
@@ -970,7 +952,6 @@ bool static ProcessMessage(
         }
     } else {
         sporkManager.ProcessSpork(mainCriticalSection, pfrom, strCommand, vRecv);
-        mnModule.processMasternodeMessages(pfrom,strCommand,vRecv);
     }
 
     return true;
@@ -1056,9 +1037,8 @@ bool ProcessReceivedMessages(CNode* pfrom)
         // Process message
         bool fRet = false;
         try {
-            const MasternodeModule& mnModule = GetMasternodeModule();
             CTxMemPool& mempool = GetTransactionMemoryPool();
-            fRet = ProcessMessage(mnModule,mempool, cs_main, pfrom, strCommand, msg.vRecv, msg.nTime);
+            fRet = ProcessMessage(mempool, cs_main, pfrom, strCommand, msg.vRecv, msg.nTime);
             boost::this_thread::interruption_point();
         } catch (std::ios_base::failure& e) {
             pfrom->PushMessage("reject", strCommand, REJECT_MALFORMED, string("error parsing message"));
@@ -1233,12 +1213,12 @@ static void CollectBlockDataToRequest(int64_t nNow, CNode* pto, std::vector<CInv
         }
     }
 }
-void CollectNonBlockDataToRequestAndRequestIt(const MasternodeModule& mnModule, const CTxMemPool& mempool, CNode* pto, int64_t nNow, std::vector<CInv>& vGetData)
+void CollectNonBlockDataToRequestAndRequestIt(const CTxMemPool& mempool, CNode* pto, int64_t nNow, std::vector<CInv>& vGetData)
 {
     while (!pto->IsFlaggedForDisconnection() && !pto->mapAskFor.empty() && (*pto->mapAskFor.begin()).first <= nNow)
     {
         const CInv& inv = (*pto->mapAskFor.begin()).second;
-        if (!AlreadyHave(mnModule,mempool, inv)) {
+        if (!AlreadyHave(mempool, inv)) {
             LogPrint("net", "Requesting %s peer=%d\n", inv, pto->id);
             vGetData.push_back(inv);
             if (vGetData.size() >= 1000) {
@@ -1319,7 +1299,6 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
         {
             BeginSyncingWithPeer(pto);
         }
-        const MasternodeModule& mnModule = GetMasternodeModule();
         CTxMemPool& mempool = GetTransactionMemoryPool();
         if(!settings.isReindexingBlocks()) PeriodicallyRebroadcastMempoolTxs(cs_main, mempool);
         SendInventoryToPeer(pto,fSendTrickle);
@@ -1330,7 +1309,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
             RequestDisconnectionFromNodeIfStalling(nNow,pto);
             if(fFetch) CollectBlockDataToRequest(nNow,pto,vGetData);
         }
-        CollectNonBlockDataToRequestAndRequestIt(mnModule, mempool, pto,nNow,vGetData);
+        CollectNonBlockDataToRequestAndRequestIt(mempool, pto,nNow,vGetData);
     }
     return true;
 }

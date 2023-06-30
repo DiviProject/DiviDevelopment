@@ -1,6 +1,6 @@
 ## Definition
 
-This document describes how to start new network based on Divi code. 
+This document describes how to start new network based on Divi code.
 
 We will breakdown whole process to list of steps.
 
@@ -9,7 +9,7 @@ We will breakdown whole process to list of steps.
 3. P2P and RPC ports
 4. Fixed seeds
 5. Genesis block
-6. PoW -> PoS transition 
+6. PoW -> PoS transition
 7. DNS seeding
 8. HD Wallet configuration
 9. Changing version
@@ -20,7 +20,7 @@ Code has many mentions of Divi, everything related to names(except license info)
 
 ### Address format
 
-`chainparams.cpp` contains code that configures format of P2PKH, P2SH, private key, ext pub/priv keys. 
+`chainparams.cpp` contains code that configures format of P2PKH, P2SH, private key, ext pub/priv keys.
 
 ```
 base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 30);
@@ -33,7 +33,7 @@ base58Prefixes[EXT_COIN_TYPE] = boost::assign::list_of(0x80)(0x00)(0x00)(0x77).c
 
 ```
 
-Change those values to get different format. 
+Change those values to get different format.
 
 Refer to this table to get relation of byte value to final symbol https://en.bitcoin.it/wiki/List_of_address_prefixes
 
@@ -53,7 +53,7 @@ To start new chain we need to create new genesis block, complete instructions ar
 
 ### PoW -> PoS transition
 
-Initially chain starts as PoW and transitions to PoS at block height which is set in `chainparams.cpp` at line `nLastPOWBlock = 100;`. 
+Initially chain starts as PoW and transitions to PoS at block height which is set in `chainparams.cpp` at line `nLastPOWBlock = 100;`.
 
 To start PoW we need to have at least one connected peer and run `setgenerate true`
 
@@ -61,7 +61,7 @@ For PoS transition we need to have stakeable balance(aged for 1 hour), wallet ha
 
 ### DNS seeding
 
-Seeder itself is located under this repo: https://github.com/Divicoin/divi-seeder, it needs to be forked and core parameters has to be changed, sample of those changes can be checked at github history. 
+Seeder itself is located under this repo: https://github.com/Divicoin/divi-seeder, it needs to be forked and core parameters has to be changed, sample of those changes can be checked at github history.
 
 Address for seeder needs to be hardcoded in `chainparams.cpp` at line `vSeeds.push_back(CDNSSeedData("autoseeds.diviseed.diviproject.org", "autoseeds.diviseed.diviproject.org"));`
 
@@ -76,7 +76,6 @@ Value in code needs to be changed in `chainparams.cpp` at line `nExtCoinType = 3
 Wallet version is set in few places:
 
 1. `configure.ac`
-2. `clientversion.h` 
+2. `clientversion.h`
 
-Changing values in those files is sufficient to get new version. 
-
+Changing values in those files is sufficient to get new version.

@@ -2,8 +2,6 @@ accumulatormap.cpp
 accumulatormap.h
 accumulators.cpp
 accumulators.h
-activemasternode.cpp
-activemasternode.h
 addressindex.h
 addrman.cpp
 addrman.h
@@ -72,18 +70,6 @@ leveldbwrapper.h
 limitedmap.h
 main.cpp
 main.h
-masternode-budget.cpp
-masternode-budget.h
-masternode-payments.cpp
-masternode-payments.h
-masternode-sync.cpp
-masternode-sync.h
-masternode.cpp
-masternode.h
-masternodeconfig.cpp
-masternodeconfig.h
-masternodeman.cpp
-masternodeman.h
 merkleblock.cpp
 merkleblock.h
 miner.cpp
@@ -93,8 +79,6 @@ net.cpp
 net.h
 netbase.cpp
 netbase.h
-netfulfilledman.cpp
-netfulfilledman.h
 noui.cpp
 noui.h
 obfuscation-relay.cpp
@@ -151,7 +135,6 @@ qt/forms/coincontroldialog.ui
 qt/forms/editaddressdialog.ui
 qt/forms/helpmessagedialog.ui
 qt/forms/intro.ui
-qt/forms/masternodelist.ui
 qt/forms/multisenddialog.ui
 qt/forms/multisigdialog.ui
 qt/forms/obfuscationconfig.ui
@@ -175,8 +158,6 @@ qt/intro.cpp
 qt/intro.h
 qt/macdockiconhandler.h
 qt/macnotificationhandler.h
-qt/masternodelist.cpp
-qt/masternodelist.h
 qt/multisenddialog.cpp
 qt/multisenddialog.h
 qt/multisigdialog.cpp
@@ -267,8 +248,6 @@ rpcblockchain.cpp
 rpcclient.cpp
 rpcclient.h
 rpcdump.cpp
-rpcmasternode-budget.cpp
-rpcmasternode.cpp
 rpcmining.cpp
 rpcmisc.cpp
 rpcnet.cpp

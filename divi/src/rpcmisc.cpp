@@ -29,9 +29,6 @@
 #include <spentindex.h>
 #include <net.h>
 #include <obfuscation.h>
-#include <MasternodeModule.h>
-#include <masternode-sync.h>
-#include <MasternodeHelpers.h>
 #include <FeeAndPriorityCalculator.h>
 #include <PeerBanningService.h>
 #include <IndexDatabaseUpdateCollector.h>
@@ -155,72 +152,6 @@ Value getinfo(const Array& params, bool fHelp, CWallet* pwallet)
     obj.push_back(Pair("staking status", (nStaking ? "Staking Active" : "Staking Not Active")));
     obj.push_back(Pair("errors", GetWarningMessage("statusbar")));
     return obj;
-}
-
-Value mnsync(const Array& params, bool fHelp, CWallet* pwallet)
-{
-    std::string strMode;
-    if (params.size() == 1)
-        strMode = params[0].get_str();
-
-    if (fHelp || params.size() != 1 || (strMode != "status" && strMode != "reset")) {
-        throw runtime_error(
-            "mnsync \"status|reset\"\n"
-            "\nReturns the sync status or resets sync.\n"
-
-            "\nArguments:\n"
-            "1. \"mode\"    (string, required) either 'status' or 'reset'\n"
-
-            "\nResult ('status' mode):\n"
-            "{\n"
-            "  \"IsBlockchainSynced\": true|false,    (boolean) 'true' if blockchain is synced\n"
-            "  \"timestampOfLastMasternodeListUpdate\": xxxx,        (numeric) Timestamp of last MN list message\n"
-            "  \"timestampOfLastMasternodeWinnerUpdate\": xxxx,      (numeric) Timestamp of last MN winner message\n"
-            "  \"lastBudgetItem\": xxxx,            (numeric) Timestamp of last MN budget message\n"
-            "  \"timestampOfLastFailedSync\": xxxx,           (numeric) Timestamp of last failed sync\n"
-            "  \"countOfFailedSyncAttempts\": n,           (numeric) Number of failed syncs (total)\n"
-            "  \"nominalNumberOfMasternodeBroadcastsReceived\": n,        (numeric) Number of MN list messages (total)\n"
-            "  \"nominalNumberOfMasternodeWinnersReceived\": n,      (numeric) Number of MN winner messages (total)\n"
-            "  \"sumBudgetItemProp\": n,        (numeric) Number of MN budget messages (total)\n"
-            "  \"sumBudgetItemFin\": n,         (numeric) Number of MN budget finalization messages (total)\n"
-            "  \"fulfilledMasternodeListSyncRequests\": n,      (numeric) Number of MN list messages (local)\n"
-            "  \"fulfilledMasternodeWinnerSyncRequests\": n,    (numeric) Number of MN winner messages (local)\n"
-            "  \"countBudgetItemProp\": n,      (numeric) Number of MN budget messages (local)\n"
-            "  \"countBudgetItemFin\": n,       (numeric) Number of MN budget finalization messages (local)\n"
-            "  \"currentMasternodeSyncStatus\": n, (numeric) Status code of last sync phase\n"
-            "  \"totalSuccessivePeerSyncRequests\": n, (numeric) Status code of last sync attempt\n"
-            "}\n"
-
-            "\nResult ('reset' mode):\n"
-            "\"status\"     (string) 'success'\n"
-            "\nExamples:\n" +
-            HelpExampleCli("mnsync", "\"status\"") + HelpExampleRpc("mnsync", "\"status\""));
-    }
-
-    const MasternodeModule& mnModule = GetMasternodeModule();
-    if (strMode == "status") {
-        Object obj;
-        const CMasternodeSync& masternodeSynchronization = mnModule.getMasternodeSynchronization();
-        obj.push_back(Pair("IsBlockchainSynced", IsBlockchainSynced()));
-        obj.push_back(Pair("timestampOfLastMasternodeListUpdate", masternodeSynchronization.timestampOfLastMasternodeListUpdate));
-        obj.push_back(Pair("timestampOfLastMasternodeWinnerUpdate", masternodeSynchronization.timestampOfLastMasternodeWinnerUpdate));
-        obj.push_back(Pair("timestampOfLastFailedSync", masternodeSynchronization.timestampOfLastFailedSync));
-        obj.push_back(Pair("countOfFailedSyncAttempts", masternodeSynchronization.countOfFailedSyncAttempts));
-        obj.push_back(Pair("nominalNumberOfMasternodeBroadcastsReceived", masternodeSynchronization.nominalNumberOfMasternodeBroadcastsReceived));
-        obj.push_back(Pair("nominalNumberOfMasternodeWinnersReceived", masternodeSynchronization.nominalNumberOfMasternodeWinnersReceived));
-        obj.push_back(Pair("fulfilledMasternodeListSyncRequests", masternodeSynchronization.fulfilledMasternodeListSyncRequests));
-        obj.push_back(Pair("fulfilledMasternodeWinnerSyncRequests", masternodeSynchronization.fulfilledMasternodeWinnerSyncRequests));
-        obj.push_back(Pair("currentMasternodeSyncStatus", masternodeSynchronization.currentMasternodeSyncStatus));
-        obj.push_back(Pair("totalSuccessivePeerSyncRequests", masternodeSynchronization.totalSuccessivePeerSyncRequests));
-
-        return obj;
-    }
-
-    if (strMode == "reset") {
-        mnModule.forceMasternodeResync();
-        return "success";
-    }
-    return "failure";
 }
 
 #ifdef ENABLE_WALLET
@@ -1066,8 +997,6 @@ Value getstakingstatus(const Array& params, bool fHelp, CWallet* pwallet)
         obj.push_back(Pair("staking_balance", ValueFromAmount(stakkingBalance)   ));
         obj.push_back(Pair("enoughcoins", stakkingBalance > 0 ));
     }
-
-    obj.push_back(Pair("mnsync", GetMasternodeModule().getMasternodeSynchronization().IsSynced()));
 
     bool nStaking = HasRecentlyAttemptedToGenerateProofOfStake();
     obj.push_back(Pair("staking status", nStaking));

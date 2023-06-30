@@ -5,7 +5,6 @@
 #include <chain.h>
 #include <chainparams.h>
 #include <I_PeerBlockNotifyService.h>
-#include <masternode-sync.h>
 #include <timedata.h>
 #include <boost/thread.hpp>
 #include <I_BlockFactory.h>
@@ -27,7 +26,6 @@ CoinMinter::CoinMinter(
     const CChainParams& chainParameters,
     const I_PeerBlockNotifyService& peerNotifier,
     const I_BlockSubmitter& blockSubmitter,
-    const CMasternodeSync& masternodeSynchronization,
     I_BlockFactory& blockFactory,
     I_StakingWallet& wallet,
     HashedBlockMap& mapHashedBlocks
@@ -35,7 +33,6 @@ CoinMinter::CoinMinter(
     , chainParameters_(chainParameters)
     , peerNotifier_( peerNotifier)
     , blockSubmitter_(blockSubmitter)
-    , masternodeSync_(masternodeSynchronization)
     , blockFactory_( blockFactory )
     , wallet_(wallet)
     , mapHashedBlocks_(mapHashedBlocks)
@@ -76,7 +73,6 @@ bool CoinMinter::canMintCoins()
         (blockType == PROOF_OF_WORK ||
             (blockType == PROOF_OF_STAKE &&
              wallet_.CanStakeCoins() &&
-             (ActivationState(chainTip).IsActive(Fork::DeprecateMasternodes)? true: masternodeSync_.IsSynced()) &&
              hasMintableCoinForProofOfStake() &&
              !limitStakingSpeed() ));
     return stakingRequirementsAreMet;

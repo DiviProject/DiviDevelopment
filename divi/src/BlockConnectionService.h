@@ -20,7 +20,6 @@ class CSporkManager;
 class BlockMap;
 class I_SuperblockSubsidyContainer;
 class I_BlockIncentivesPopulator;
-class MasternodeModule;
 class CChainParams;
 
 class BlockConnectionService

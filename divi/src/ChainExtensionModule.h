@@ -9,7 +9,6 @@
 class I_ChainExtensionService;
 class I_BlockValidator;
 class CTxMemPool;
-class MasternodeModule;
 class CCriticalSection;
 class MainNotificationSignals;
 class Settings;
@@ -46,7 +45,6 @@ public:
     ChainExtensionModule(
         ChainstateManager& chainstateManager,
         CTxMemPool& mempool,
-        const MasternodeModule& masternodeModule,
         MainNotificationSignals& mainNotificationSignals,
         CCriticalSection& mainCriticalSection,
         const Settings& settings,

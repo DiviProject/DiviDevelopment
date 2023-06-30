@@ -3,12 +3,7 @@ DIVI Core Integration and Staging Repository
 
 [![Build Status](https://travis-ci.org/divicoin/divi.svg?branch=master)](https://travis-ci.org/divicoin/divi) [![GitHub version](https://badge.fury.io/gh/divicoin%2FDIVI.svg)](https://badge.fury.io/gh/divicoin%2FDIVI)
 
-DIVI is a new cutting edge cryptocurrency which includes several key features that are not available in most other cryptocurrencies. Some of these features are as follows:
-- Our _SwiftTX_ functionality allows for fast transaction execution, resulting in guaranteed zero confirmation transactions.
-- Decentralized blockchain voting provides consensus based advancement of the current Masternode technology used to secure the network and provide additional feature functionality.
-- Each of the 5-Tier level Masternodes are secured with a collateral DIV.
-
-Additional information can be found at [diviproject.org](http://www.diviproject.org) 
+Additional information can be found at [diviproject.org](http://www.diviproject.org)
 
 ### Coin Specs
 <table>
@@ -35,10 +30,9 @@ Additional information can be found at [diviproject.org](http://www.diviproject.
 ### Rewards / Payout System
 
 <table>
-<th colspan=4>PoS - Proof of Stake with Masternodes</th>
+<th colspan=4>PoS - Proof of Stake </th>
 <tr><th>Recipients</th><th>Percentage</th></tr>
 <tr><td>Staking</td><td>45% *</td></tr>
-<tr><td>Masternodes</td><td>45% *</td></tr>
 <tr><td>Treasury</td><td>8%</td></tr>
 <tr><td>Charities</td><td>2%</td></tr>
 <tr><td>*</td><td colspan=3>SeeSaw Algorithm will be used to balance these based on the needs of the network.</td></tr>

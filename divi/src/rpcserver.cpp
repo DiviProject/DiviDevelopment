@@ -128,22 +128,8 @@ extern json_spirit::Value invalidateblock(const json_spirit::Array& params, bool
 extern json_spirit::Value reconsiderblock(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
 extern json_spirit::Value getinvalid(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
 
-extern json_spirit::Value allocatefunds(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);// in rpcmasternode.cpp
-extern json_spirit::Value verifymasternodesetup(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
-extern json_spirit::Value signmnbroadcast(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
-extern json_spirit::Value setupmasternode(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
-extern json_spirit::Value listmasternodes(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
-extern json_spirit::Value getmasternodecount(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
-extern json_spirit::Value broadcaststartmasternode(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
-extern json_spirit::Value startmasternode(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
-extern json_spirit::Value getmasternodestatus(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
-extern json_spirit::Value getmasternodewinners(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
-extern json_spirit::Value importmnbroadcast(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
-extern json_spirit::Value listmnbroadcasts(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
-
 extern json_spirit::Value ban(const json_spirit::Array& params, bool fHelp, CWallet* pwallet); // in rpcmisc.cpp
 extern json_spirit::Value getinfo(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
-extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
 extern json_spirit::Value spork(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
 extern json_spirit::Value validateaddress(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
 extern json_spirit::Value createmultisig(const json_spirit::Array& params, bool fHelp, CWallet* pwallet);
@@ -389,20 +375,6 @@ static const CRPCCommand vRPCCommands[] =
         {"hidden", "setmocktime", &setmocktime, true, false, false, false},
 
         /* Divi features */
-		{ "divi", "allocatefunds", &allocatefunds, true, true, false, true},
-		{"divi", "listmasternodes", &listmasternodes, true, true, false, false},
-        {"divi", "getmasternodecount", &getmasternodecount, true, true, false,false},
-        {"divi","setupmasternode",&setupmasternode,true,false,true,true},
-        {"divi","signmnbroadcast",&signmnbroadcast,true,false,true,true},
-        {"divi","verifymasternodesetup",&verifymasternodesetup,true,true,true, false},
-        {"divi", "broadcaststartmasternode", &broadcaststartmasternode, true, true, false, false},
-        {"divi", "startmasternode", &startmasternode, true, true, false, true},
-        {"divi", "getmasternodestatus", &getmasternodestatus, true, true, false, false},
-        {"divi", "getmasternodewinners", &getmasternodewinners, true, true, false, false},
-        {"divi", "importmnbroadcast", &importmnbroadcast, true, false, false, false},
-        {"divi", "listmnbroadcasts", &listmnbroadcasts, true, false, false, false},
-
-        {"divi", "mnsync", &mnsync, true, true, false, false},
         {"divi", "spork", &spork, true, true, false, false},
         {"divi","ban",&ban,false,false,false, false},
         {"divi","clearbanned",&clearbanned,false,false,false, false},

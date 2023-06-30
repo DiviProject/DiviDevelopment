@@ -9,7 +9,6 @@
 #include <chain.h>
 #include <ValidationState.h>
 #include <I_BlockValidator.h>
-#include <MasternodeModule.h>
 #include <clientversion.h>
 #include <utiltime.h>
 
@@ -27,7 +26,7 @@
  * @param[out]  dbp     If pblock is stored to disk (or already there), this will be set to its location.
  * @return True if state.IsValid()
  */
-bool ProcessNewBlock(const MasternodeModule& mnModule,const I_BlockValidator& blockValidator, CValidationState& state, CBlock* pblock, CNode* pfrom, CDiskBlockPos* dbp)
+bool ProcessNewBlock(const I_BlockValidator& blockValidator, CValidationState& state, CBlock* pblock, CNode* pfrom, CDiskBlockPos* dbp)
 {
     // Preliminary checks
     int64_t nStartTime = GetTimeMillis();
@@ -42,7 +41,6 @@ bool ProcessNewBlock(const MasternodeModule& mnModule,const I_BlockValidator& bl
 
     if(!blockValidator.connectActiveChain(*pblock,state)) return false;
 
-    mnModule.voteForMasternodePayee(pindex);
     LogPrintf("%s : ACCEPTED in %ld milliseconds with size=%d\n", __func__, GetTimeMillis() - nStartTime,
               pblock->GetSerializeSize(SER_DISK, CLIENT_VERSION));
 
@@ -54,24 +52,21 @@ namespace
 class BlockProcessingVisitor : public boost::static_visitor<bool>
 {
 public:
-    const MasternodeModule& mnModule_;
     const I_BlockValidator& blockValidator_;
     CValidationState& state_;
     CBlock& block_;
 public:
     BlockProcessingVisitor(
-        const MasternodeModule& mnModule,
         const I_BlockValidator& blockValidator,
         CValidationState& state,
         CBlock& block
-        ): mnModule_(mnModule)
-        , blockValidator_(blockValidator)
+        ): blockValidator_(blockValidator)
         , state_(state)
         , block_(block)
     {
     }
-    bool operator()(CNode* node) const { return ProcessNewBlock(mnModule_, blockValidator_, state_, &block_, node, nullptr); }
-    bool operator()(CDiskBlockPos* blockDiskPosition) const { return ProcessNewBlock(mnModule_, blockValidator_, state_, &block_, nullptr, blockDiskPosition); }
+    bool operator()(CNode* node) const { return ProcessNewBlock(blockValidator_, state_, &block_, node, nullptr); }
+    bool operator()(CDiskBlockPos* blockDiskPosition) const { return ProcessNewBlock(blockValidator_, state_, &block_, nullptr, blockDiskPosition); }
 };
 
 }
@@ -79,12 +74,10 @@ public:
 BlockSubmitter::BlockSubmitter(
     const I_BlockValidator& blockValidator,
     CCriticalSection& mainCriticalSection,
-    ChainstateManager& chainstate,
-    const MasternodeModule& mnModule
+    ChainstateManager& chainstate
     ): blockValidator_(blockValidator)
     , mainCriticalSection_(mainCriticalSection)
     , chainstate_(chainstate)
-    , mnModule_(mnModule)
 {
 }
 
@@ -105,7 +98,7 @@ bool BlockSubmitter::submitBlockForChainExtension(CBlock& block) const
 
     // Process this block the same as if we had received it from another node
     CValidationState state;
-    if (!IsBlockValidChainExtension(&block) || !ProcessNewBlock(mnModule_,blockValidator_, state, &block, nullptr, nullptr))
+    if (!IsBlockValidChainExtension(&block) || !ProcessNewBlock(blockValidator_, state, &block, nullptr, nullptr))
         return error("%s : block not accepted",__func__);
 
     return true;
@@ -113,5 +106,5 @@ bool BlockSubmitter::submitBlockForChainExtension(CBlock& block) const
 
 bool BlockSubmitter::acceptBlockForChainExtension(CValidationState& state, CBlock& block, BlockDataSource blockDataSource) const
 {
-    return boost::apply_visitor(BlockProcessingVisitor(mnModule_,blockValidator_,state,block), blockDataSource);
+    return boost::apply_visitor(BlockProcessingVisitor(blockValidator_,state,block), blockDataSource);
 }

@@ -9,11 +9,11 @@ https://diviproject.org
 ## What is Divi?
 ---
 
-Divi is a next-generation blockchain protocol that enables any user to begin earning, sending, and spending cryptocurrency easily, without the need for advanced technical knowledge. Divi uses a state-of-the-art Proof of Stake consensus mechanism that offers opportunities for users to stake their coins or allocate their coins to Masternodes, which secure the network and verify transactions.
+Divi is a next-generation blockchain protocol that enables any user to begin earning, sending, and spending cryptocurrency easily, without the need for advanced technical knowledge. Divi uses a state-of-the-art Proof of Stake consensus mechanism that offers opportunities for users to stake their coins or allocate their coins to Staking Vaults, which secure the network and verify transactions.
 
 For more information, as well as an immediately usable version of the Divi Project software, visit our website's [download page](https://diviproject.org/downloads), or read our [whitepaper](https://wiki.diviproject.org/#whitepaper).
 
-## License 
+## License
 ---
 
 Divi Core is released under the terms of the MIT license. See https://opensource.org/licenses/MIT for more information.
@@ -62,4 +62,3 @@ For additional information about dependencies see [build-unix.md](./divi/doc/bui
 make
 make install # optional
 ```
-

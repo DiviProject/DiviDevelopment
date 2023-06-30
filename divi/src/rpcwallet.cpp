@@ -18,7 +18,6 @@
 #include "utiltime.h"
 #include "utilmoneystr.h"
 #include "wallet.h"
-#include "masternode-payments.h"
 #include <SuperblockSubsidyContainer.h>
 #include <script/standard.h>
 #include <script/StakingVaultScript.h>

@@ -24,17 +24,10 @@ mempool_coinbase_spends.py
 mempool_reject.py
 mempool_resurrect_test.py
 mempool_spendcoinbase.py
-MnAreSafeToRestart.py
-mncollateral.py
-mnoperation.py
-masternodes_with_vaults.py
-mnstoredbroadcast.py
-mnvaults.py
 multisig.py
 multiwallet.py
 multiwallet_mining.py
 wallet_accounts.py
-NoBlocksForLongTime.py
 op_meta.py
 prune_wallet.py
 paper_wallets.py
@@ -47,8 +40,6 @@ PowToPosTransition.py
 rawtransactions.py
 rest.py
 rpcbind_test.py
-remotestart.py
-remotestart.py --outdated_ping
 send_money_options.py
 StakingWithLockedCoins.py
 StakingVaultWithdrawals.py

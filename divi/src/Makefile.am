@@ -96,9 +96,7 @@ endif
 .PHONY: FORCE
 # divi core #
 BITCOIN_CORE_H = \
-  activemasternode.h \
   Account.h \
-  MasternodeHelpers.h \
   addrman.h \
   alert.h \
   allocators.h \
@@ -147,9 +145,6 @@ BITCOIN_CORE_H = \
   core_io.h \
   crypter.h \
   obfuscation.h \
-  MasternodeModule.h \
-  MasternodeBroadcastFactory.h \
-  RpcMasternodeFeatures.h \
   db.h \
   dbenv.h \
   DatabaseWrapper.h\
@@ -265,22 +260,11 @@ BITCOIN_CORE_H = \
   ExtendedBlockFactory.h \
   BlockProofProver.h \
   BlockFactory.h \
-  masternode.h \
-  MasternodePing.h \
-  MasternodePaymentData.h \
-  MasternodePaymentWinner.h \
-  MasternodePayeeData.h \
-  masternode-payments.h \
   LotteryCoinstakes.h \
   LotteryWinnersCalculator.h \
   BlockIncentivesPopulator.h \
   SuperblockSubsidyContainer.h \
   SuperblockHeightValidator.h \
-  masternode-tier.h \
-  masternode-sync.h \
-  MasternodeNetworkMessageManager.h \
-  masternodeman.h \
-  masternodeconfig.h \
   merkleblock.h \
   merkletx.h \
   I_MerkleTxConfirmationNumberCalculator.h \
@@ -298,7 +282,6 @@ BITCOIN_CORE_H = \
   MinimumFeeCoinSelectionAlgorithm.h \
   mruset.h \
   netbase.h \
-  netfulfilledman.h \
   net.h \
   AddrDB.h \
   NodeRef.h \
@@ -341,7 +324,6 @@ BITCOIN_CORE_H = \
   spork.h \
   sporkdb.h \
   spentindex.h \
-  StoredMasternodeBroadcasts.h \
   streams.h \
   sync.h \
   I_SpentOutputTracker.h \
@@ -514,8 +496,6 @@ libbitcoin_server_a_SOURCES = \
   PoSStakeModifierService.cpp \
   PeerNotificationOfMintService.cpp \
   miner.cpp \
-  MasternodeHelpers.cpp \
-  MasternodeModule.cpp \
   BlockMemoryPoolTransactionCollector.cpp \
   MonthlyWalletBackupCreator.cpp \
   net.cpp \
@@ -526,7 +506,6 @@ libbitcoin_server_a_SOURCES = \
   NodeStats.cpp \
   NetworkLocalAddressHelpers.cpp \
   PeerBanningService.cpp \
-  netfulfilledman.cpp \
   noui.cpp \
   BlockProofVerifier.cpp \
   rest.cpp \
@@ -535,8 +514,6 @@ libbitcoin_server_a_SOURCES = \
   JsonParseHelpers.cpp \
   rpcblockchain.cpp \
   rpclottery.cpp \
-  rpcmasternode.cpp \
-  RpcMasternodeFeatures.cpp \
   rpcmining.cpp \
   rpcmisc.cpp \
   rpcnet.cpp \
@@ -575,12 +552,10 @@ endif
 libbitcoin_wallet_a_CFLAGS = -fPIC
 libbitcoin_wallet_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_wallet_a_SOURCES = \
-  activemasternode.cpp \
   Account.cpp \
   bip38.cpp \
   BlockSubsidyProvider.cpp \
   obfuscation.cpp \
-  MasternodeBroadcastFactory.cpp \
   uiMessenger.cpp \
   db.cpp \
   dbenv.cpp \
@@ -590,27 +565,15 @@ libbitcoin_wallet_a_SOURCES = \
   keypool.cpp \
   LegacyBlockSubsidies.cpp \
   Logging-wallet.cpp \
-  masternode.cpp \
-  MasternodePing.cpp \
-  MasternodePaymentData.cpp \
-  MasternodePaymentWinner.cpp \
-  MasternodePayeeData.cpp \
-  masternode-payments.cpp \
   LotteryWinnersCalculator.cpp \
   LotteryCoinstakes.cpp \
   BlockIncentivesPopulator.cpp \
   SuperblockSubsidyContainer.cpp \
   SuperblockHeightValidator.cpp \
   SpentOutputTracker.cpp \
-  StoredMasternodeBroadcasts.cpp \
-  masternode-sync.cpp \
-  masternodeconfig.cpp \
-  MasternodeNetworkMessageManager.cpp \
   NodeState.cpp \
   BlocksInFlightRegistry.cpp \
   NodeStateRegistry.cpp \
-  masternodeman.cpp \
-  netfulfilledman.cpp \
   reservekey.cpp \
   rpcdump.cpp \
   BlockSubmitter.cpp \

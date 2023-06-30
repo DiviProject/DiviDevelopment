@@ -20,7 +20,6 @@ class Settings;
 class CFeeRate;
 class I_BlockSubmitter;
 class CChainParams;
-class CMasternodeSync;
 class CSporkManager;
 class I_DifficultyAdjuster;
 class I_BlockProofProver;
@@ -59,7 +58,6 @@ void InitializeCoinMintingModule(
     const Settings& settings,
     const CChainParams& chainParameters,
     const I_BlockProofProver& blockProofProver,
-    const CMasternodeSync& masternodeSynchronization,
     const CFeeRate& minimumRelayFeeRate,
     const I_PeerBlockNotifyService& peerNotificationService,
     const I_BlockSubmitter& blockSubmitter,

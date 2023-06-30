@@ -75,7 +75,6 @@ CoinMintingModule::CoinMintingModule(
     const Settings& settings,
     const CChainParams& chainParameters,
     const I_BlockProofProver& blockProofProver,
-    const CMasternodeSync& masternodeSynchronization,
     const CFeeRate& relayTxFeeCalculator,
     const I_PeerBlockNotifyService& peerNotifier,
     const I_BlockSubmitter& blockSubmitter,
@@ -109,7 +108,6 @@ CoinMintingModule::CoinMintingModule(
             chainParameters,
             peerNotifier,
             blockSubmitter,
-            masternodeSynchronization,
             *blockFactory_,
             wallet,
             mapHashedBlocks))
