@@ -278,14 +278,14 @@ const StakableCoin* PoSTransactionCreator::FindProofOfStake(
 }
 
 void PoSTransactionCreator::SplitOrCombineUTXOS(
+    const CBlockRewards& blockrewards,
     const CAmount stakeSplit,
     const CBlockIndex* chainTip,
     CMutableTransaction& txCoinStake,
     const StakableCoin& stakeData,
     std::vector<const CTransaction*>& vwtxPrev) const
 {
-    CBlockRewards blockSubdidy = blockSubsidies_.GetBlockSubsidity(chainTip->nHeight + 1);
-    CAmount nCredit = stakeData.GetTxOut().nValue + blockSubdidy.nStakeReward + (ActivationState(chainTip).IsActive(Fork::DeprecateMasternodes)? blockSubdidy.nMasternodeReward : 0);
+    CAmount nCredit = stakeData.GetTxOut().nValue + blockrewards.nStakeReward;
     constexpr char autocombineSettingLookup[] = "-autocombine";
     bool autocombine = settings_.GetBoolArg(autocombineSettingLookup,true);
     if (nCredit > stakeSplit )
@@ -307,11 +307,11 @@ void PoSTransactionCreator::SplitOrCombineUTXOS(
 }
 
 void PoSTransactionCreator::AppendBlockRewardPayoutsToTransaction(
+    const CBlockRewards& blockrewards,
     const CBlockIndex* chainTip,
     CMutableTransaction& txCoinStake) const
 {
-    CBlockRewards blockSubdidy = blockSubsidies_.GetBlockSubsidity(chainTip->nHeight + 1);
-    incentives_.FillBlockPayee(txCoinStake,blockSubdidy,chainTip);
+    incentives_.FillBlockPayee(txCoinStake,blockrewards,chainTip);
 }
 
 bool PoSTransactionCreator::attachBlockProof(
@@ -361,8 +361,14 @@ bool PoSTransactionCreator::attachBlockProof(
         stakeSplit = std::max(stakeSplit,20000*COIN);
     }
 
-    SplitOrCombineUTXOS(stakeSplit,chainTip,txCoinStake,*successfullyStakableUTXO,vwtxPrev);
-    AppendBlockRewardPayoutsToTransaction(chainTip,txCoinStake);
+    CBlockRewards blockrewards = blockSubsidies_.GetBlockSubsidity(chainTip->nHeight + 1);
+    if(ActivationState(chainTip).IsActive(Fork::DeprecateMasternodes))
+    {
+        blockrewards.nStakeReward += blockrewards.nMasternodeReward;
+        blockrewards.nMasternodeReward = 0;
+    }
+    SplitOrCombineUTXOS(blockrewards, stakeSplit, chainTip, txCoinStake, *successfullyStakableUTXO, vwtxPrev);
+    AppendBlockRewardPayoutsToTransaction(blockrewards, chainTip,txCoinStake);
 
     int nIn = 0;
     for (const CTransaction* pcoin : vwtxPrev) {

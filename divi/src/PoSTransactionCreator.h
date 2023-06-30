@@ -24,6 +24,7 @@ class StakedCoins;
 struct StakableCoin;
 class Settings;
 class I_StakingWallet;
+struct CBlockRewards;
 
 class PoSTransactionCreator: public I_BlockProofProver
 {
@@ -67,9 +68,11 @@ private:
         bool& isVaultScript) const;
 
     void AppendBlockRewardPayoutsToTransaction(
+        const CBlockRewards& blockrewards,
         const CBlockIndex* chainTip,
         CMutableTransaction& txCoinStake) const;
     void SplitOrCombineUTXOS(
+        const CBlockRewards& blockrewards,
         const CAmount stakeSplit,
         const CBlockIndex* chainTip,
         CMutableTransaction& txCoinStake,
