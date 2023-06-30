@@ -29,18 +29,7 @@ inventoryTypeByName = {
     {"tx",MSG_TX},
     {"block",MSG_BLOCK},
     {"filtered block",MSG_FILTERED_BLOCK},
-    {"tx lock request",MSG_TXLOCK_REQUEST},
-    {"tx lock vote",MSG_TXLOCK_VOTE},
-    {"spork",MSG_SPORK},
-    {"mn winner",MSG_MASTERNODE_WINNER},
-    {"mn scan error",MSG_MASTERNODE_SCANNING_ERROR},
-    {"mn budget vote",MSG_BUDGET_VOTE},
-    {"mn budget proposal",MSG_BUDGET_PROPOSAL},
-    {"mn budget finalized",MSG_BUDGET_FINALIZED},
-    {"mn budget finalized vote",MSG_BUDGET_FINALIZED_VOTE},
-    {"mn quorum",MSG_MASTERNODE_QUORUM},
-    {"mn announce",MSG_MASTERNODE_ANNOUNCE},
-    {"mn ping",MSG_MASTERNODE_PING}};
+    {"spork",MSG_SPORK}};
 static const std::map<int,std::string> inventoryNameByType = ReverseMap(inventoryTypeByName);
 
 static const int maxInventoryId = (int)inventoryTypeByName.size();

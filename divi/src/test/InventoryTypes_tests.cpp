@@ -6,7 +6,7 @@ BOOST_AUTO_TEST_SUITE(InventoryTypeTests)
 
 BOOST_AUTO_TEST_CASE(willCheckInventoryTypesAreKnown)
 {
-    for(int inventoryId = MSG_TX; inventoryId <= MSG_MASTERNODE_PING; ++inventoryId)
+    for(int inventoryId = MSG_TX; inventoryId <= MSG_SPORK; ++inventoryId)
     {
         CInv inv(inventoryId,0);
         BOOST_CHECK_MESSAGE(inv.IsKnownType(),"Inventory is of unknown type\n");
@@ -19,13 +19,13 @@ BOOST_AUTO_TEST_CASE(willCheckInventoryIdsAreWithinRange)
         BOOST_CHECK_MESSAGE(!inv.IsKnownType(),"Zero is an invalid inventory id\n");
     }
     {
-        CInv inv(MSG_MASTERNODE_PING+1,0);
+        CInv inv(MSG_SPORK+1,0);
         BOOST_CHECK_MESSAGE(!inv.IsKnownType(),"Invalid inventory id being treated as known\n");
     }
 }
 BOOST_AUTO_TEST_CASE(willCheckInventoryCommandsCanBeConvertedToMatchingTypes)
 {
-    for(int inventoryId = MSG_TX; inventoryId <= MSG_MASTERNODE_PING; ++inventoryId)
+    for(int inventoryId = MSG_TX; inventoryId <= MSG_SPORK; ++inventoryId)
     {
         CInv inv(inventoryId,0);
         CInv copiedInventory(inv.GetCommand(),0);
@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(willCheckInventoryCommandsCanBeConvertedToMatchingTypes)
         BOOST_CHECK_MESSAGE(inv.GetType()==copiedInventory.GetType(), "Inventory type does not match inventory command");
     }
     {
-        CInv inv(MSG_MASTERNODE_PING+1,0);
+        CInv inv(MSG_SPORK+1,0);
         CInv copiedInventory(inv.GetCommand(),0);
         BOOST_CHECK_MESSAGE(inv.GetType()==copiedInventory.GetType(), "Inventory type for invalid object was copied into a valid type");
         BOOST_CHECK_MESSAGE(copiedInventory.GetType() == 0, "Erroneous inventory object has been assigned valid type");

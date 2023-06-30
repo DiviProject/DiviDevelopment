@@ -147,10 +147,6 @@ bool static AlreadyHave(const CTxMemPool& mempool, const CInv& inv)
         const ChainstateManager::Reference chainstate;
         return chainstate->GetBlockMap().count(inv.GetHash()) > 0;
     }
-    case MSG_TXLOCK_REQUEST:
-        return false;
-    case MSG_TXLOCK_VOTE:
-        return false;
     case MSG_SPORK:
         return SporkDataIsKnown(inv.GetHash());
     }
@@ -181,13 +177,6 @@ static bool PushKnownInventory(const CTxMemPool& mempool, CNode* pfrom, const CI
         pushed = ShareSporkDataWithPeer(pfrom,inv.GetHash());
         break;
     case InventoryType::MSG_FILTERED_BLOCK:
-    case InventoryType::MSG_TXLOCK_REQUEST:
-    case InventoryType::MSG_BUDGET_VOTE:
-    case InventoryType::MSG_MASTERNODE_SCANNING_ERROR:
-    case InventoryType::MSG_BUDGET_PROPOSAL:
-    case InventoryType::MSG_BUDGET_FINALIZED:
-    case InventoryType::MSG_BUDGET_FINALIZED_VOTE:
-    case InventoryType::MSG_MASTERNODE_QUORUM:
     default:
         break;
     }
