@@ -43,8 +43,6 @@ namespace boost
 class thread_group;
 } // namespace boost
 
-bool addNode(const std::string& strNode, const std::string& strCommand);
-std::vector<std::string> getAddedNodeList();
 
 void StartNode(const Settings& settings, CCriticalSection& mainCriticalSection, boost::thread_group& threadGroup);
 bool StopNode();
@@ -65,6 +63,9 @@ void NotifyPeersOfNewChainTip(const int chainHeight, const uint256& updatedBlock
 void DeterministicallyRelayAddressToLimitedPeers(const CAddress& addr,int numberOfNodes);
 void RelayAlertToPeers(const CAlert& alert);
 void RelayAllAlertsTo(CNode* peer);
+
+std::vector<std::string> getAddedNodeList();
+bool addNode(const std::string& strNode, const std::string& strCommand);
 std::vector<std::string> BanOutdatedPeers();
 bool BanSpecificPeer(const CNetAddr& address);
 int GetPeerCount();
