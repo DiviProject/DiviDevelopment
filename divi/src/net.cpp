@@ -538,11 +538,6 @@ NodeRef ConnectNode(CAddress addrConnect, const char* pszDest = NULL, const bool
 
     return NodeReferenceFactory::makeUniqueNodeReference(nullptr);
 }
-bool CheckNodeIsAcceptingConnections(CAddress addrToConnectTo)
-{
-    NodeRef pnode = ConnectNode(addrToConnectTo, NULL);
-    return static_cast<bool>(pnode);
-}
 
 static std::vector<CSubNet> vWhitelistedRange;
 static CCriticalSection cs_vWhitelistedRange;

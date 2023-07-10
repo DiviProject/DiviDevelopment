@@ -43,7 +43,6 @@ namespace boost
 class thread_group;
 } // namespace boost
 
-bool CheckNodeIsAcceptingConnections(CAddress addrToConnectTo);
 bool OpenNetworkConnection(const CAddress& addrConnect, const char* strDest = NULL, bool fOneShot = false);
 bool addNode(const std::string& strNode, const std::string& strCommand);
 std::vector<std::string> getAddedNodeList();
