@@ -12,7 +12,6 @@
 #include "sync.h"
 #include <NodeSignals.h>
 #include <NetworkLocalAddressHelpers.h>
-#include <I_PeerSyncQueryService.h>
 #include <I_PeerBlockNotifyService.h>
 
 #include <deque>
@@ -51,7 +50,6 @@ void CleanupP2PConnections();
 CAddrMan& GetNetworkAddressManager();
 
 int GetMaxConnections();
-const I_PeerSyncQueryService& GetPeerSyncQueryService();
 const I_PeerBlockNotifyService& GetPeerBlockNotifyService();
 
 bool RepeatRelayedInventory(CNode* pfrom, const CInv& inv);

@@ -115,37 +115,6 @@ struct ListenSocket {
 };
 }
 
-class PeerSyncQueryService: public I_PeerSyncQueryService
-{
-private:
-    const std::vector<CNode*>& peers_;
-    CCriticalSection& peersLock_;
-public:
-    PeerSyncQueryService(
-        const std::vector<CNode*>& peers,
-        CCriticalSection& peersLock
-        ): peers_(peers)
-        , peersLock_(peersLock)
-    {
-    }
-    virtual std::vector<NodeRef> GetSporkSyncedOrInboundNodes() const
-    {
-        std::vector<NodeRef> vSporkSyncedNodes;
-        {
-            TRY_LOCK(peersLock_, lockedNodes);
-            if (!lockedNodes) return {};
-            for(CNode* node: peers_)
-            {
-                if(node->fInbound || node->AreSporksSynced())
-                {
-                    vSporkSyncedNodes.push_back(NodeReferenceFactory::makeUniqueNodeReference(node));
-                }
-            }
-        }
-        return vSporkSyncedNodes;
-    }
-};
-
 //
 // Global state variables
 //
@@ -311,7 +280,6 @@ public:
 static CCriticalSection& cs_vNodes = NodeManager::Instance().nodesLock();
 static std::vector<CNode*>& vNodes = NodeManager::Instance().nodes();
 
-PeerSyncQueryService peerSyncQueryService(vNodes,cs_vNodes);
 PeerNotificationOfMintService peerBlockNotify(vNodes,cs_vNodes);
 template <typename ...Args>
 CNode* CreateNode(SOCKET socket, Args&&... args)
@@ -348,10 +316,6 @@ int GetMaxConnections()
     return nMaxConnections;
 }
 
-const I_PeerSyncQueryService& GetPeerSyncQueryService()
-{
-    return peerSyncQueryService;
-}
 const I_PeerBlockNotifyService& GetPeerBlockNotifyService()
 {
     return peerBlockNotify;
