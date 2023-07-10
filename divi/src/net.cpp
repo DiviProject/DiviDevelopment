@@ -62,6 +62,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
 
+bool OpenNetworkConnection(const CAddress& addrConnect, const char* strDest = NULL, bool fOneShot = false);
+
 /** -listen default */
 constexpr bool DEFAULT_LISTEN = true;
 /** -upnp default */
