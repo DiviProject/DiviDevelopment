@@ -42,16 +42,22 @@ namespace boost
 class thread_group;
 } // namespace boost
 
+// Initialization of P2P networking
+class UIMessenger;
+bool SetNumberOfFileDescriptors(UIMessenger& uiMessenger, int& nFD);
+int GetMaxConnections();
+void SetNetworkingParameters();
+const I_PeerBlockNotifyService& GetPeerBlockNotifyService();
 
+bool InitializeP2PNetwork(UIMessenger& uiMessenger);
+void FinalizeP2PNetwork();
 void StartNode(const Settings& settings, CCriticalSection& mainCriticalSection, boost::thread_group& threadGroup);
 bool StopNode();
 void CleanupP2PConnections();
 
+
+
 CAddrMan& GetNetworkAddressManager();
-
-int GetMaxConnections();
-const I_PeerBlockNotifyService& GetPeerBlockNotifyService();
-
 bool RepeatRelayedInventory(CNode* pfrom, const CInv& inv);
 class CTransaction;
 void RelayTransactionToAllPeers(const CTransaction& tx);
@@ -92,10 +98,4 @@ struct CNodeStateStats {
     }
 };
 void GetNodeStateStats(std::vector<std::pair<CNodeStats,CNodeStateStats>>& vstats);
-
-class UIMessenger;
-bool SetNumberOfFileDescriptors(UIMessenger& uiMessenger, int& nFD);
-void SetNetworkingParameters();
-bool InitializeP2PNetwork(UIMessenger& uiMessenger);
-void FinalizeP2PNetwork();
 #endif // BITCOIN_NET_H
