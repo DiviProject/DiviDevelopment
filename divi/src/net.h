@@ -53,8 +53,6 @@ bool StopNode();
 void CleanupP2PConnections();
 
 CAddrMan& GetNetworkAddressManager();
-bool PeersLocalAddressIsGood(CNode* pnode);
-void AdvertizeLocal(CNode* pnode);
 
 int GetMaxConnections();
 const I_PeerSyncQueryService& GetPeerSyncQueryService();
