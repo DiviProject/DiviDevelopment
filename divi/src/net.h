@@ -55,19 +55,18 @@ void StartNode(const Settings& settings, CCriticalSection& mainCriticalSection, 
 bool StopNode();
 void CleanupP2PConnections();
 
-
-
+// Data relay coordination management
 CAddrMan& GetNetworkAddressManager();
 bool RepeatRelayedInventory(CNode* pfrom, const CInv& inv);
 class CTransaction;
 void RelayTransactionToAllPeers(const CTransaction& tx);
 void RelayInv(CInv& inv);
-
 void NotifyPeersOfNewChainTip(const int chainHeight, const uint256& updatedBlockHashForChainTip, const int fallbackPeerChainHeightEstimate);
 void DeterministicallyRelayAddressToLimitedPeers(const CAddress& addr,int numberOfNodes);
 void RelayAlertToPeers(const CAlert& alert);
 void RelayAllAlertsTo(CNode* peer);
 
+// RPC-specific utilities
 std::vector<std::string> getAddedNodeList();
 bool addNode(const std::string& strNode, const std::string& strCommand);
 std::vector<std::string> BanOutdatedPeers();
